@@ -1,18 +1,20 @@
-# Hello, world!
-#
-# This is an example function named 'hello' 
-# which prints 'Hello, world!'.
-#
-# You can learn more about package authoring with RStudio at:
-#
-#   https://r-pkgs.org
-#
-# Some useful keyboard shortcuts for package authoring:
-#
-#   Install Package:           'Ctrl + Shift + B'
-#   Check Package:             'Ctrl + Shift + E'
-#   Test Package:              'Ctrl + Shift + T'
 
-hello <- function() {
-  print("Hello, world!")
-}
+# Checking Unique Values --------------------------------------------------
+length(unique(cab_rides$time_stamp))
+length(unique(weather$time_stamp))
+
+
+# Merging A Range of Weather & Rides --------------------------------------
+library(data.table)
+
+setDT(cab_rides)
+setDT(weather)
+
+setkey(cab_rides, time_stamp)
+setkey(weather, time_stamp)
+
+merged_data <- weather[cab_rides, roll = "nearest"]
+
+dim(merged_data)
+head(merged_data)
+
