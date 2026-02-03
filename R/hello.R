@@ -18,3 +18,5 @@ merged_data <- weather[cab_rides, roll = "nearest"]
 dim(merged_data)
 head(merged_data)
 
+example
+
