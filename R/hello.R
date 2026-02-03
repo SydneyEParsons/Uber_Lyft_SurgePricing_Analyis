@@ -7,6 +7,9 @@ length(unique(weather$time_stamp))
 # Merging A Range of Weather & Rides --------------------------------------
 library(data.table)
 
+cab_rides <- cab_rides %>%
+  mutate(time_stamp = floor(time_stamp / 1000))
+
 setDT(cab_rides)
 setDT(weather)
 
@@ -17,4 +20,3 @@ merged_data <- weather[cab_rides, roll = "nearest"]
 
 dim(merged_data)
 head(merged_data)
-
