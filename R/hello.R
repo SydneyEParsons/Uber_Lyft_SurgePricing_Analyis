@@ -18,5 +18,9 @@ setkey(weather, time_stamp)
 
 merged_data <- weather[cab_rides, roll = "nearest"]
 
+merged_data <- merged_data %>%
+  filter(name != "Taxi")
+
 dim(merged_data)
 head(merged_data)
+print(merged_data)
