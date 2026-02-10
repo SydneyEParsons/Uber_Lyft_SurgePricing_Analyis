@@ -24,3 +24,6 @@ merged_data <- merged_data %>%
 dim(merged_data)
 head(merged_data)
 print(merged_data)
+
+write.csv(merged_data, "merged_data_cleaned.csv", row.names = FALSE)
+
