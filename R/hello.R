@@ -32,7 +32,7 @@ setkey(weather, time_stamp)
 
 merged_data <- weather[cab_rides, roll = "nearest", allow.cartesian = TRUE]
 
-dim(merged_data)
+# dim(merged_data)
 head(merged_data)
 print(merged_data)
 
