@@ -1,3 +1,0 @@
-"0",""
-"0","# plot 3：uber vs lyft (platform difference)"
-"0","ggplot(df, aes(cab_type, price)) +  geom_boxplot() + scale_y_log10()"

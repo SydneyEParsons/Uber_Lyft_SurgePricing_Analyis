@@ -1,3 +1,0 @@
-"0",""
-"0","# plot 2：price distribution"
-"0","ggplot(df, aes(price)) +  geom_histogram(bins = 60)"
