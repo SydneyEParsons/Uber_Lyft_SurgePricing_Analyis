@@ -1,0 +1,72 @@
+---
+title: R Packages
+format:
+    revealjs:
+        theme: [white, ../custom.scss]
+        smaller: true
+        scrollable: true
+        slide-number: true
+        self-contained: true
+---
+
+## What is an R package?
+
+- A R package is a collection of R functions, datasets, and other information
+    organized in a specific way.
+- R packages can be installed so that R can recognize the package exists,
+    then loaded so that the functions and datasets can be used within R.
+- Functions have documentation that explain how they can be used, datasets have
+    documentation that explain the structure of the data and describe each
+    variable.
+- The package DESCRIPTION file gives a brief description of the purpose of the
+    package and keeps tracks of any other packages that are needed in order to
+    use it.
+
+## Why create your own R package?
+
+- Encourages organization of your project
+- Lets you re-use R code across multiple projects
+- Lets you easily share your own R code or data with others
+- Gives you access to help files and documentation within R
+
+## Structure of an R package
+
+- An R package is a directory with the same name as the package with some or all
+    of the following:
+    - A DESCRIPTION file giving the name of the package, the authors of the
+        package, a brief description of the purpose of the package, and a list
+        of dependencies
+    - A NAMESPACE file that tells R which functions or datasets should be made
+        available to use in R.
+    - An R/ directory containing .R files that define and document functions and
+        document datasets
+    - A data/ directory containing datasets in a specific R friendly format.
+    - A man/ directory containing the help files that show up in R
+    - A vignettes/ directory containing .Rmd or .qmd files that perform a data
+        analysis or a long-form documentation of the whole package.
+
+## Writing R packages
+
+- The **devtools** package automates some of the most common tasks such as
+    - Starting a new package
+    - Installing a package either from a directory or from
+        a GitHub repository
+    - Adding datasets or vignettes to your package.
+    - Checking that your package conforms to the standard organization.
+- The **roxygen2** package gives an easy way to document functions and
+    datasets. Roxygen *tags* are added before every function that explain...
+    - The name of purpose of the function.
+    - The names and descriptions of inputs you can give to the function.
+    - A description of the output returned by the function.
+    - An overview of how the function calculates the output from the inputs.
+    - Additional details, references, or examples.
+    - A optional *export* tag that tells R to make the function available in R.
+
+## Resources
+
+- [R packages](https://r-pkgs.org): A free beginner-friendly but still complete 
+    online book that guides you through creating R packages. Chapter 16 also 
+    includes a guide to documenting your package using **roxygen2**.
+- [An example package](https://github.com/lawlerem/nnspline): An example of a
+    fairly simple R package that only includes R functions, documented using
+    **roxygen2** and tracked using Git/GitHub.

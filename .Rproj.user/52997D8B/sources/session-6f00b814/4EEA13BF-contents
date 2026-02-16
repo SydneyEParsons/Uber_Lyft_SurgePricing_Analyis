@@ -1,0 +1,386 @@
+---
+title: RTMB Examples
+---
+
+```{r}
+library(RTMB)
+```
+
+# Linear Regression
+
+- Question: How far does a car need to completely stop?
+
+$$
+    y \sim \text{N}\left(\beta_{0} + \beta_{1} x, \sigma^{2}\right)
+$$
+
+```{r}
+# Load the cars data into our R environment
+data(cars)
+
+# Because of the way RTBM::OBS works (see later), we need to create a new 
+#     variable that holds our response variable.
+dist<- cars$dist
+
+# Create a function that computes the negative log-likelihood function
+nll<- function(pars) {
+    # Lets you reference the elements of pars by name
+    # E.g. instead of pars$beta0, you can just write beta0
+    pars |> RTMB::getAll()
+
+    # Tell RTMB that the "dist" variable is a response variable, letting you...
+    #     - simulate dist
+    #     - calculate residuals for dist
+    dist<- dist |> RTMB::OBS()
+
+    # RTMB expects all the parameters to be able to take any numeric value,
+    #     but standard deviations need to be positive.
+    # Taking e^log_sd takes a parameter log_sd that can take any numeric value
+    #     and converts it to a value that is positive.
+    sd<- exp(log_sd)
+
+    # Compute the log-likelihood contributions for each observation
+    ll<- dist |>
+        dnorm(
+            beta0 + beta1 * cars$speed,
+            sd,
+            log = TRUE
+        ) |>
+        sum()
+
+    # Return the negative log-likelihood
+    return( -ll )
+}
+
+# Create a list of all the parameters we have in our model.
+#     - Regression intercept
+#     - Regression slope
+#     - (log) observation standard deviation
+# The values we give it will be the starting values for the iterative
+#     optimizer, which sometimes matter but usually only complicated models.
+pars<- list(
+    beta0 = 0,
+    beta1 = 0,
+    log_sd = 0
+)
+
+# Use RTMB to take our negative log-likelihood function and give us the
+#     gradient, hessian, and other tools RTMB provides.
+obj<- nll |> RTMB::MakeADFun(pars, silent = TRUE)
+
+# Use a optimizer available in R to take the log-likelihood function and
+#     gradient calculated by RTMB to find the parameter values that minimize
+#     the negative log-likelihood.
+opt<- obj |> with(nlminb(par, fn, gr))
+opt
+
+# Use the parameter estimates and the gradient/hessian calculated by RTMB to
+#     compute standard errors for the model parameters
+sdr<- obj |> RTMB::sdreport(opt$par)
+sdr
+
+# Compute residuals, which RTMB can do for us because we told it that
+#     dist was a response variable using the RTMB::OBS function.
+# Because our model is a simple linear regression, we can use the "fullGaussian"
+#     method, but other methods are available for more complicated models.
+# In all cases, the residuals you get out can be interpreted exactly like you
+#     would for linear model residuals: they are iid standard normal residuals
+#     when the model is a good representation of the data.
+# Look at the "Choosing the Method" section of the documentation of
+#     TMB::oneStepPredict to know which method to use.
+residuals<- obj |> oneStepPredict(method = "fullGaussian")
+qqnorm(residuals[, 1]); abline(a = 0, b = 1)
+
+# We often want to simulate new data from a fitted model to perform techniques
+#     like the parametric bootstrap we learned about for testing the variance
+#     components for random effects in a linear mixed model.
+# Because we used the RTMB::OBS function we can simulate new observations from
+#     our fitted model.
+#     - The covariate values will be the same as they were in the original data
+#     - The parameter values will be the ones we estimated (or parameters we 
+#         explicity tell it use)
+sim<- obj$simulate()
+sim
+
+# An example parametric bootstrap
+#
+# First we'll set up an empty data.frame that will hold the bootstrapped
+#     parameter estimates.
+# Then we will repeatedly simulate a new set of observations from the model to 
+#     try and replicate the process of sampling our original data from the
+#     original population in order to quantify how much uncertainty in our
+#     parameter estimates are due to the random sampling.
+bootstrap_estimates<- data.frame(
+    beta0 = numeric(100),
+    beta1 = numeric(100),
+    log_sd = numeric(100)
+)
+
+# Get the original parameter estimates out in a list form that we can give
+#     back to RTMB.
+parameter_estimates<- obj$env$parList()
+for( i in bootstrap_estimates |> nrow() |> seq() ) {
+    # Simulate a new set of observations
+    dist<- obj$simulate() |> _$dist
+    
+    # Recreate our negative log-likelihood function so that it is updated
+    #     with the new simulated data
+    sim_obj<- nll |> RTMB::MakeADFun(parameter_estimates, silent = TRUE)
+
+    # Re-estimate the model parameters using the simulated data.
+    sim_opt<- sim_obj |> with(nlminb(par, fn, gr))
+
+    # Store the re-estimated parameters in our bootstrap data.frame
+    bootstrap_estimates[i, ]<- sim_opt$par
+}
+plot(bootstrap_estimates)
+
+
+# Next we'll modify our negative log-likelihood function to report derived
+#     quantities like the standard deviation and the predicted means for a
+#     range of covariate values.
+# We'll also make sure we're not using one of the simulated sets of data.
+predictions<- data.frame(
+    speed = seq(0, 30, by = 1)
+)
+dist<- cars$dist
+nll<- function(pars) {
+    pars |> RTMB::getAll()
+    dist<- dist |> RTMB::OBS()
+    
+    # Compute the predicted mean for each of our prediction inputs
+    predicted_dist<- beta0 + beta1 * predictions$speed
+    # Tell RTMB you want access to predicted_dist when running obj$report()
+    predicted_dist |> RTMB::REPORT()
+    # Tell RTMB to compute standard errors for predicted_dist when running
+    #     RTMB::sdreport.
+    # You don't need to REPORT a variable in order to ADREPORT a variable,
+    #     the two functions do two related but independent tasks.
+    predicted_dist |> RTMB::ADREPORT()
+
+    # Compute the standard deviation and tell RTMB to compute its standard
+    #     error when running RTMB::sdreport
+    sd<- exp(log_sd)
+    sd |> RTMB::ADREPORT()
+
+    ll<- dist |>
+        dnorm(
+            beta0 + beta1 * cars$speed,
+            sd,
+            log = TRUE
+        ) |>
+        sum()
+
+    return( -ll )
+}
+obj<- nll |> RTMB::MakeADFun(pars, silent = TRUE)
+opt<- obj |> with(nlminb(par, fn, gr))
+sdr<- obj |> RTMB::sdreport(opt$par)
+
+# First look at the variables that we told RTMB we wanted access to using
+#     RTMB::REPORT.
+obj$report()
+predictions$dist<- obj$report()$predicted_dist
+(dist ~ speed) |> plot(data = predictions, type = "l")
+
+# When you tell RTMB you want standard errors for derived quantities, you can
+#     access them by taking sdr and looking at either the estimate or the
+#     the standard errors.
+sdr_est<- sdr |> as.list(what = "Est", report = TRUE)
+sdr_est
+
+sdr_se<- sdr |> as.list(what = "Std", report = TRUE)
+sdr_se
+
+# To take the standard errors and compute a confidence interval we'll do the
+#     usual mean +- 1.96 * (std err.)
+predictions$dist_CIl<- sdr_est$predicted_dist - 1.96 * sdr_se$predicted_dist
+predictions$dist<- sdr_est$predicted_dist
+predictions$dist_CIu<- sdr_est$predicted_dist + 1.96 * sdr_se$predicted_dist
+
+(dist ~ speed) |> plot(data = predictions, type = "l")
+(dist_CIl ~ speed) |> lines(data = predictions, lty = 2)
+(dist_CIu ~ speed) |> lines(data = predictions, lty = 2)
+
+# We can also make a confidence interval for the standard deviation, but we
+#     have to choose which of two ways to do it.
+# First we'll take the standard error we just reported for sd and compute
+#     the confidence interval that way.
+sd_CI1<- c(sdr_est$sd) + c(-1.96, 0, 1.96) * c(sdr_se$sd)
+sd_CI1
+
+# The other way we can do it is compute a confidence interval for log_sd and
+#     convert the whole confidence interval.
+# Since log_sd was one of the original parameters, we need to say report = FALSE.
+sdr_est<- sdr |> as.list(what = "Est", report = FALSE)
+sdr_se<- sdr |> as.list(what = "Std", report = FALSE)
+sd_CI2<- exp(c(sdr_est$log_sd) + c(-1.96, 0, 1.96) * c(sdr_se$log_sd))
+sd_CI2
+
+# The new confidence intervals are very similar but not quite the same, because
+#     our transformation e^x is nonlinear.
+# In many cases, the difference can be very large and it's generally better
+#     to compute confidence intervals the second way.
+```
+
+
+
+
+# A Length-at-Age Growth Curve with Random Effects
+
+- Question: What is the relationship between a fish's length and its age?
+- A very common model for this type of question is a von Bertalanffy growth
+    curve
+$$
+    L\left(a\right) = L_{\infty} \left(1 - e^{-k*a}\right)
+$$
+    
+where $L_{\infty}$ is average length of a fully grown fish and $k$ is a growth
+    rate parameter, both of which must be positive numbers.
+We also believe that there might be spatial differences in the parameters so 
+    we will let $L_{\infty}$ and $k$ both be random effects dependent on a
+    spatial ID grouping variable.
+We need to specify a statistical model in order to use maximum likelihood
+    estimation, so we will choose a log-normal distribution for the response
+    variable because length is a positive and continuous variable.
+    
+$$
+\begin{align*}
+    L_{i} &\sim
+        \text{logN}\left(
+            L_{\infty, s_{i}} \left(1 - e^{-k_{s_{i}}*a_{i}}\right),~
+            \sigma^{2}
+        \right) \\
+    \text{log} L_{\infty, s} &\sim 
+        \text{N}\left(\mu_{L}, \sigma_{L}^{2}\right) \\
+    \text{log} k_{s} &\sim
+        \text{N}\left(\mu_{k}, \sigma_{k}^{2}\right)
+\end{align*}
+$$
+
+This is not a model that can be easily fit using common functions we've learned
+    in R, so we will write our own function to compute the negative 
+    log-likelihood and use RTMB to help us estimate the model parameters.
+
+```{r}
+survey<- read.csv("vonB.csv")
+survey$Id<- factor(survey$Id)
+plot(survey)
+
+# Some of the length are recorded as 0, but we don't actually believe those are
+#     true 0s, and in any case they wouldn't work with our model so we'll remove
+#     them.
+survey<- survey |> subset(length > 0)
+
+# To make the rest of the code easier, I'll "attach" survey so that the
+#     columns are available without referencing the survey dataset
+attach(survey)
+
+# We know in advance that we'll want to plot the predicted growth curves for
+#     each spatial area so we'll create a data.frame to hold the predictions.
+prediction<- expand.grid(
+    age = seq(0, 100, by = 1),
+    Id = Id |> unique()
+)
+head(prediction)
+
+# When we're writing the log-likelihood for a complicated model, we usually
+#     want to write the model "from the bottom up".
+# So we'll write the contributions from the growth parameter random effects for
+#     L_{\infty, s} and k_{s} first, then create predictions for the length
+#     of each fish, and finally write the contribution for the observed length
+#     of each fish.
+nll<- function(pars) {
+    pars |> RTMB::getAll()
+    ll<- 0
+
+    # Make sure the standard deviation for the k random effects is positive
+    sd_k<- log_sd_k |> exp()
+
+    # log_k is a random effects with a normal distribution, so we add its
+    #     contribution to the log-likelihood just the same as we would for
+    #     an observation that is normally distributed.
+    ll<- ll + (
+        log_k |>
+            dnorm(mu_k, sd_k, log = TRUE) |>
+            sum()
+    )
+
+    # Add the log-likelihood contributions for the L_{\infty} random effects
+    sd_L<- log_sd_L |> exp()
+    ll<- ll + (
+        log_L |>
+            dnorm(mu_L, sd_L, log = TRUE) |>
+            sum()
+    )
+
+    # Convert the random effects to the scale we need for the von Bertalanffy
+    #     curve and give predictions for the length-at-age for each spatial
+    #     area
+    k<- exp(log_k)
+    L<- exp(log_L)
+    k |> RTMB::ADREPORT()
+    L |> RTMB::ADREPORT()
+
+    predicted_length<- L[prediction$Id] * (1 - exp(-k[prediction$Id] * prediction$age))
+    predicted_length |> RTMB::REPORT()
+
+    # Make sure the standard deviation for the observation log-normal
+    #     distribution is positive
+    sd<- exp(log_sd)
+    
+    length<- length |> RTMB::OBS()
+    # Add the log-likelihood contributions for the observed lengths
+    ll<- ll + (
+        length |>
+            dlnorm(
+                meanlog = (L[Id] * (1 - exp(-k[Id] * age))) |> log(),
+                sdlog = sd,
+                log = TRUE
+            ) |>
+            sum()
+    )
+
+    return( -ll )
+}
+
+# We need one value of log_k and one value of log_L for each of our spatial
+#     zones, so for each we'll create a numeric vector with that many entries.
+pars<- list(
+    log_sd_k = 0,
+    log_k = Id |> unique() |> length() |> numeric(),
+    mu_k = 0,
+    log_sd_L = 0,
+    log_L = Id |> unique() |> length() |> numeric(),
+    mu_L = 0,
+    log_sd = 0
+)
+
+# To tell RTMB that log_k and log_L should be treated as random effects and that
+#     we want it to use the Laplace approximation to integrate them out to get
+#     the marginal log-likelihood, we just give their names to the "random"
+#     argument.
+obj<- nll |> RTMB::MakeADFun(pars, random = c("log_k", "log_L"), silent = TRUE)
+opt<- obj |> with(nlminb(par, fn, gr))
+opt
+
+# Note that the parameters we estimated do not include the random effects!
+# We can still get the estimated values and standard errors using sdreport
+sdr<- obj |> RTMB::sdreport(opt$par)
+sdr |> summary()
+
+# Finally, we'll get the predicted growth curves using obj$report() and then
+#     plot the results along with the original data.
+prediction$length<- obj$report() |> _$predicted_length
+(length ~ age) |> plot(pch = 19, cex = 0.2, col = rgb(0, 0, 0, 0.2))
+for( i in Id |> unique() ) {
+    (length ~ age) |> 
+        lines(
+            data = prediction |> subset(Id == i)
+        )
+}
+
+# We can also use all the same techniques we used in the first example in order
+#     to compute confidence intervals for the growth curves in each different
+#     spatial area
+```
