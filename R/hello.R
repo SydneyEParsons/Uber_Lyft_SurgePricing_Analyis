@@ -1,6 +1,10 @@
 # Load the data files
-cab_rides <- read.csv("data/cab_rides.csv")
-weather <- read.csv("data/weather.csv")
+library(data.table)
+library(dplyr)
+library(lubridate)
+
+cab_rides <- read.csv("cab_rides.csv")
+weather <- read.csv("weather.csv")
 
 # Checking Unique Values --------------------------------------------------
 length(unique(cab_rides$time_stamp))
@@ -16,10 +20,6 @@ cab_rides <- cab_rides %>%
 
 
 # Merging A Range of Weather & Rides --------------------------------------
-library(data.table)
-library(dplyr)
-library(lubridate)
-
 cab_rides <- cab_rides %>%
   mutate(time_stamp = as.POSIXct(time_stamp / 1000, origin = "1970-01-01", tz = "UTC"), hour_ts = floor_date(time_stamp, unit = "hour"))
 
