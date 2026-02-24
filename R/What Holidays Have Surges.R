@@ -12,6 +12,13 @@ merged_data <- merged_data %>%
   mutate(date = as.Date(time_stamp))
 head(merged_data$date)
 
-#Hanukkah
-
-#Cyber Monday
+#Holidays
+merged_data <- merged_data %>%
+  mutate(holiday = case_when(
+    date == as.Date("2018-11-26") ~ "Cyber Monday",
+    date == as.Date("2018-12-06") ~ "St. Nicholas Day",
+    date == as.Date("2018-12-07") ~ "Pearl Harbor Day",
+    date >= as.Date("2018-12-03") & date <= as.Date("2018-12-10") ~ "Hanukkah",
+    date == as.Date("2018-12-02") ~ "Advent",
+    TRUE ~ "None"
+  ))
