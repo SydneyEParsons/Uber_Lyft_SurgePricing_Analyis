@@ -3,6 +3,7 @@
 # Load libraries
 library(dplyr)
 library(lubridate)
+library(ggplot2)
 
 # Load merged data
 merged_data <- read.csv("merged_data_cleaned.csv")
@@ -89,3 +90,65 @@ print(time_summary, n = 288)
 #Distribution of the Surge Multiplier
 table(merged_data$surge_multiplier)
 #Looking at surge so far it appears that none of the three factors analysed have any impact on surge pricing. However, we are limited to two holidays in this data set that we can analyse.
+
+#----------------------------------------------------------------------------
+#Price
+#Modelling Holiday Price - GLM
+
+glm_price_holiday <- glm(price ~ holiday,
+                         data = merged_data,
+                         family = Gamma(link = "log"))
+
+summary(glm_price_holiday)
+
+#Modelling Weekend and Weekday Price - GLM
+glm_price_day_of_week <- glm(price ~ day_of_week,
+                             data = merged_data,
+                             family = Gamma(link = "log"))
+
+summary(glm_price_day_of_week)
+
+#Modelling Time of Day Price - GLM
+glm_price_hour <- glm(price ~ hour,
+                         data = merged_data,
+                         family = Gamma(link = "log"))
+
+summary(glm_price_hour)
+
+#Modelling All Predictors Price - GLM
+glm_price_full <- glm(price ~ holiday + day_of_week + hour + cab_type + name,
+                      data = merged_data,
+                      family = Gamma(link = "log"))
+summary(glm_price_full)
+
+#---------------------------------------------------------------
+#Surge
+#Modelling Holiday Surge - GLM
+glm_surge_holiday <- glm(surge_multiplier ~ holiday,
+                         data = merged_data,
+                         family = Gamma(link = "log"))
+
+summary(glm_surge_holiday)
+
+#Modelling Weekend and Weekday Surge - GLM
+glm_surge_day_of_week <- glm(surge_multiplier ~ day_of_week,
+                             data = merged_data,
+                             family = Gamma(link = "log"))
+
+summary(glm_surge_day_of_week)
+
+#Modelling Time of Day Surge - GLM
+glm_surge_hour <- glm(surge_multiplier ~ hour,
+                         data = merged_data,
+                         family = Gamma(link = "log"))
+
+summary(glm_surge_hour)
+
+#Modelling All Predictors Surge - GLM
+glm_surge_full <- glm(surge_multiplier ~ holiday + day_of_week + hour + cab_type + name,
+                      data = merged_data,
+                      family = Gamma(link = "log"))
+summary(glm_surge_full)
+
+#--------------------------------------------------------------
+#Visualizations
