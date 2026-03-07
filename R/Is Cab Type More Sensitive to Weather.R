@@ -138,3 +138,4 @@ ggplot(platform_cor_long, aes(x = weather_var, y = correlation, fill = platform)
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
