@@ -10,7 +10,7 @@ library(ggplot2)
 library(mgcv)
 
 # Load merged data
-merged_data <- read.csv("merged_data_cleaned.csv")
+merged_data <- read.csv("../merged_data_cleaned.csv")
 
 #Make Weekend and Weekday Binary
 merged_data <- merged_data %>%
@@ -289,13 +289,11 @@ merged_data %>%
 ```
 
 
-
-
 ```{r}
 #How many people use the apps on weekends vs. weekdays
 
-```
 
+```
 
 
 ```{r}
@@ -344,6 +342,6 @@ plot(glm_model_price)
 #https://r-graph-gallery.com/218-basic-barplots-with-ggplot2.html
 #https://www.r-bloggers.com/2021/09/adding-text-labels-to-ggplot2-bar-chart-2/
 #https://r-graph-gallery.com/79-levelplot-with-ggplot2.html
-#
+#https://www.codecademy.com/resources/docs/general/file-paths
 ```
 
