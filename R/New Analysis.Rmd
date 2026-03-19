@@ -1,0 +1,349 @@
+---
+title: "New Analysis"
+output: html_document
+date: "2026-03-07"
+---
+```{r}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(mgcv)
+
+# Load merged data
+merged_data <- read.csv("merged_data_cleaned.csv")
+
+#Make Weekend and Weekday Binary
+merged_data <- merged_data %>%
+  mutate(
+    date = as.Date(hour_ts),
+    hour = hour(parse_date_time(hour_ts, orders = c("ymd HMS", "ymd"))), #Note for myself! I changed this from Unix time so this needs to be ymd_hms() now instead
+    day_of_week = wday(date, label = TRUE),
+    is_weekend = ifelse(wday(date) %in% c(1, 7), 1,0),
+    rush_hour = case_when(
+      is.na(hour) ~ NA_character_, #Some data points don't have a time
+      hour >= 7 & hour <= 9 ~ "Morning Rush Hour",
+      hour >= 16 & hour <= 19 ~ "Evening Rush Hours",
+      TRUE ~ "Normal Hours"
+    ),
+    holiday = case_when(
+      date == as.Date("2018-11-26") ~ "Cyber Monday",
+      date >= as.Date("2018-12-02") & date <= as.Date("2018-12-10") ~ "Hanukkah",
+      TRUE ~ "None"
+    ),
+    cab_combo = paste(cab_type, name, sep = "-") #Combining cab_type and name
+  )
+
+lyft_data <- merged_data %>%
+  filter(cab_type == "Lyft")
+
+raw <- read.csv("merged_data_cleaned.csv") #Shows how many data points don't have a time
+sum(!grepl(":", raw$hour_ts))
+
+class(merged_data$hour_ts)
+head(merged_data$hour_ts)
+```
+
+
+```{r}
+# check all combinations for cab_combo
+unique(merged_data$cab_combo)
+```
+
+
+```{r}
+#Compare day of week, price and cab_combo
+day_of_week <- merged_data %>%
+  group_by(day_of_week, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+print(day_of_week)
+```
+
+```{r}
+ggplot(data=day_of_week, mapping =aes(x=day_of_week, y=mean_price, fill=cab_combo)) +
+geom_bar(
+  stat = "identity",
+  position = "dodge") +
+geom_text(aes(label=round(mean_price, 2)), position=position_dodge(width=0.9)) +
+facet_wrap(~ cab_type) +
+labs(title = "Compare day of week, price and cab_combo
+", x="day_of_week", y="mean_price") +
+  coord_flip() 
+```
+
+
+
+```{r}
+#Compare weekday and weekends to price and cab_combo
+weekend_summary <- merged_data %>%
+  group_by(is_weekend, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+print(weekend_summary)
+```
+
+```{r}
+ggplot(data=weekend_summary, mapping =aes(x=factor(is_weekend, labels=c("Weekday", "Weekend")), y=mean_price, fill=cab_combo)) +
+geom_bar(
+  stat = "identity",
+  position = "dodge") +
+geom_text(aes(label=round(mean_price, 2)), position=position_dodge(width=0.9)) +
+facet_wrap(~ cab_type) +
+labs(title = "Compare weekday and weekends to price and cab_combo", x="is_weekend", y="mean_price") +
+  coord_flip() 
+```
+
+
+```{r}
+#Comparing weekend and weekday pricing to holiday pricing
+holiday_summary_detailed <- merged_data %>%
+  group_by(holiday, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+print(holiday_summary_detailed)
+```
+
+```{r}
+ggplot(data=holiday_summary_detailed, mapping =aes(x=factor(holiday, labels=c("Cyber Monday", "Hanukkah", "None")), y=mean_price, fill=cab_combo)) +
+geom_bar(
+  stat = "identity",
+  position = "dodge") +
+geom_text(aes(label=round(mean_price, 2)), position=position_dodge(width=0.9)) +
+facet_wrap(~ cab_type) +
+labs(title = "Comparing weekend and weekday pricing to holiday pricing", x="holiday", y="mean_price") +
+  coord_flip() 
+```
+
+
+```{r}
+#Comparing rush hour price for weekdays to price on weekends
+rush_weekdays_normal_weekends_summary <- merged_data %>%
+  group_by(rush_hour, is_weekend, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+```
+
+```{r}
+ggplot(data=rush_weekdays_normal_weekends_summary, mapping =aes(x=rush_hour, y=mean_price, fill=cab_combo)) +
+geom_bar(
+  stat = "identity",
+  position = "dodge") +
+geom_text(aes(label=round(mean_price, 2)), position=position_dodge(width=0.9)) +
+facet_wrap(~ is_weekend,
+  labeller = labeller(is_weekend = c("0" = "Weekday", "1" = "Weekend"))) +
+labs(title = "Comparing rush hour price for weekdays to price on normal weekends
+", x="rush_hour", y="mean_price") +
+  coord_flip() 
+```
+
+
+```{r}
+#Compare cab_combo, holiday and surge multiplier
+#Show how we only have 24 slots that are on a holiday
+holiday_surge_summary <- merged_data %>%
+  group_by(holiday, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE),
+    mean_surge = mean(surge_multiplier, na.rm = TRUE),
+    median_surge = median(surge_multiplier, na.rm = TRUE)
+  )
+```
+
+```{r}
+ggplot(data=holiday_surge_summary, mapping =aes(x=cab_combo, y=mean_surge, fill=holiday)) +
+geom_bar(
+  stat = "identity",
+  position = "dodge") +
+geom_text(aes(label=round(mean_surge, 2)), position=position_dodge(width=0.9)) +
+facet_wrap(~ cab_type) +
+labs(title = "Compare cab_combo, holiday and surge multiplier", x="cab type", y="surge pricing") +
+  coord_flip() 
+```
+
+
+```{r}
+#Compare time of day price on normal days to time of day on holiday
+normal_time_holiday_time_summary <- merged_data %>%
+    filter(is_weekend==0) %>%
+    group_by(hour, holiday, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+```
+
+```{r}
+ggplot(data=normal_time_holiday_time_summary %>% filter(cab_type == "Lyft"), mapping =aes(x=hour, y=mean_price, color=holiday)) +
+geom_line() +
+facet_wrap(~ cab_combo) +
+labs(title = "Compare time of day price on normal days to time of day on holiday
+", x="hour", y="mean_price") 
+```
+
+
+```{r}
+#Compare pricing on weekday holidays to rush hour pricing
+weekday_holiday_rush_summary <- merged_data %>%
+    filter(is_weekend==0) %>%
+    group_by(rush_hour, holiday, cab_type) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+```
+
+```{r}
+ggplot(data=weekday_holiday_rush_summary, mapping =aes(x=rush_hour, y=mean_price, fill=holiday)) +
+geom_bar(
+  stat = "identity",
+  position = "dodge") +
+facet_wrap(~ cab_type) +
+geom_text(aes(label=round(mean_price, 2)), position=position_dodge(width=0.9)) +
+labs(title = "Compare pricing on weekday holidays to rush hour pricing") +
+  coord_flip()
+
+ggplot(data=weekday_holiday_rush_summary, mapping =aes(x=rush_hour, y=holiday, fill=mean_price)) +
+geom_tile() +
+facet_wrap(~ cab_type) +
+  scale_fill_gradient(low="white", high="red") +
+geom_text(aes(label=round(mean_price, 2))) +
+labs(title = "Compare pricing on weekday holidays to rush hour pricing
+", x="rush_hour", y="holiday")
+```
+
+
+```{r}
+#Analyze hourly price on normal days of the week
+normal_rush_dayofweek_summary <- merged_data %>%
+    filter(holiday=="None") %>%
+    group_by(hour, day_of_week, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+```
+```{r}
+ggplot(data=normal_rush_dayofweek_summary %>% filter(cab_type == "Lyft"), mapping =aes(x=hour, y=mean_price, color=day_of_week)) +
+geom_line() +
+facet_wrap(~ cab_combo) +
+labs(title = "Analyze hourly price on normal days of the week
+", x="hour", y="mean_price") 
+
+ggplot(data=normal_rush_dayofweek_summary %>% filter(cab_type == "Uber"), mapping =aes(x=hour, y=mean_price, color=day_of_week)) +
+geom_line() +
+facet_wrap(~ cab_combo) +
+labs(title = "Analyze hourly price on normal days of the week
+", x="hour", y="mean_price") 
+```
+
+```{r}
+#Looking at the plots above time has little to no impact on the prices. The cab type is what has the most influence on the price of Uber and Lyft rides.
+```
+
+
+
+```{r}
+#How big a difference is there in the days over the full time period
+merged_data %>%
+    group_by(date) %>%
+  summarise(
+    n = n(),
+  )
+```
+
+
+
+```{r}
+#How many people use Uber vs. Lyft
+merged_data %>%
+    group_by(cab_type) %>%
+  summarise(
+    n = n(),
+  )
+```
+
+```{r}
+#How many people use each cab_type
+merged_data %>%
+    group_by(cab_combo) %>%
+  summarise(
+    n = n(),
+  )
+```
+
+
+
+
+```{r}
+#How many people use the apps on weekends vs. weekdays
+
+```
+
+
+
+```{r}
+#Modelling GLM
+
+glm_model_price <- glm(price ~ holiday + day_of_week + hour + cab_combo + is_weekend,
+                         data = merged_data,
+                         family = Gamma(link = "log"))
+summary(glm_model_price)
+plot(glm_model_price)
+```
+
+```{r}
+#Modelling GAM
+gam_model_price <- gam(price ~ holiday + day_of_week + s(hour) + cab_combo + is_weekend,
+                      data = merged_data,
+                      family = Gamma(link = "log"))
+summary(gam_model_price)
+plot(glm_model_price)
+```
+
+```{r}
+#Modelling GLM
+
+glm_model_surge <- glm(surge_multiplier ~ holiday + day_of_week + hour + cab_combo + is_weekend,
+                         data = merged_data,
+                         family = Gamma(link = "log"))
+summary(glm_model_surge)
+plot(glm_model_price)
+```
+
+```{r}
+#Modelling GAM
+gam_model_surge <- gam(surge_multiplier ~ holiday + day_of_week + s(hour) + cab_combo + is_weekend,
+                      data = merged_data,
+                      family = Gamma(link = "log"))
+summary(gam_model_surge)
+plot(glm_model_price)
+```
+
+
+```{r}
+#References
+# https://www.neonscience.org/resources/learning-hub/tutorials/dc-convert-date-time-posix-r#:~:text=POSIXct-,The%20as.,often%20your%20local%20time%20zone.
+#https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/grep
+#https://r-graph-gallery.com/218-basic-barplots-with-ggplot2.html
+#https://www.r-bloggers.com/2021/09/adding-text-labels-to-ggplot2-bar-chart-2/
+#https://r-graph-gallery.com/79-levelplot-with-ggplot2.html
+#
+```
+
