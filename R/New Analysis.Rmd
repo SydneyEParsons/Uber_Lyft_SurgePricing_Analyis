@@ -7,6 +7,7 @@ date: "2026-03-07"
 library(dplyr)
 library(lubridate)
 library(ggplot2)
+library(gratia)
 library(mgcv)
 
 # Load merged data
@@ -21,8 +22,8 @@ merged_data <- merged_data %>%
     is_weekend = ifelse(wday(date) %in% c(1, 7), 1,0),
     rush_hour = case_when(
       is.na(hour) ~ NA_character_, #Some data points don't have a time
-      hour >= 7 & hour <= 9 ~ "Morning Rush Hour",
-      hour >= 16 & hour <= 19 ~ "Evening Rush Hours",
+      hour >= 7 & hour <= 9 ~ "Morning Rush",
+      hour >= 16 & hour <= 19 ~ "Evening Rush",
       TRUE ~ "Normal Hours"
     ),
     holiday = case_when(
@@ -36,7 +37,7 @@ merged_data <- merged_data %>%
 lyft_data <- merged_data %>%
   filter(cab_type == "Lyft")
 
-raw <- read.csv("merged_data_cleaned.csv") #Shows how many data points don't have a time
+raw <- read.csv("../merged_data_cleaned.csv") #Shows how many data points don't have a time
 sum(!grepl(":", raw$hour_ts))
 
 class(merged_data$hour_ts)
@@ -63,6 +64,18 @@ print(day_of_week)
 ```
 
 ```{r}
+ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
+  geom_boxplot(outlier.shape = NA) +
+  facet_wrap(~ cab_type, scales = "free_x") +
+  scale_y_continuous(limits = c(0, 60)) +
+  labs(title = "Price Distribution by Cab Type",
+       x = "Cab Type", y = "Price") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")
+```
+
+
+```{r}
 ggplot(data=day_of_week, mapping =aes(x=day_of_week, y=mean_price, fill=cab_combo)) +
 geom_bar(
   stat = "identity",
@@ -70,8 +83,38 @@ geom_bar(
 geom_text(aes(label=round(mean_price, 2)), position=position_dodge(width=0.9)) +
 facet_wrap(~ cab_type) +
 labs(title = "Compare day of week, price and cab_combo
-", x="day_of_week", y="mean_price") +
+", x="Day of Week", y="Mean Price") +
   coord_flip() 
+
+ggplot(data=day_of_week %>% filter(cab_type == "Lyft"), 
+    mapping = aes(x=day_of_week, y=cab_combo, fill=mean_price)) +
+geom_tile() +
+  scale_fill_gradient(low="white", high="blue") +
+geom_text(aes(label=round(mean_price, 2))) +
+labs(title = "Lyft - Compare day of week, price and cab_combo
+", x="Day of Week", y="Mean Price") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(data=day_of_week %>% filter(cab_type == "Uber"), 
+    mapping = aes(x=day_of_week, y=cab_combo, fill=mean_price)) +
+geom_tile() +
+  scale_fill_gradient(low="white", high="blue") +
+geom_text(aes(label=round(mean_price, 2))) +
+labs(title = "Uber - Compare day of week, price and cab_combo
+", x="Day of Week", y="Mean Price") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+```{r}
+ggplot(merged_data, aes(x = day_of_week, y = price, fill = day_of_week)) +
+  geom_violin(trim = FALSE, bw = 2) +  
+  geom_boxplot(width = 0.1, outlier.shape = NA) +  
+  facet_wrap(~ cab_type) +
+  scale_y_continuous(limits = c(0, 60)) +  
+  labs(title = "Price Distribution by Day of The Week",
+       x = "Day of Week", y = "Price") +
+  theme_minimal() +
+  theme(legend.position = "none") 
 ```
 
 
@@ -95,7 +138,7 @@ geom_bar(
   position = "dodge") +
 geom_text(aes(label=round(mean_price, 2)), position=position_dodge(width=0.9)) +
 facet_wrap(~ cab_type) +
-labs(title = "Compare weekday and weekends to price and cab_combo", x="is_weekend", y="mean_price") +
+labs(title = "Compare weekday and weekends to price and cab_combo", x="Is Weekend", y="Mean Price") +
   coord_flip() 
 ```
 
@@ -119,20 +162,31 @@ geom_bar(
   position = "dodge") +
 geom_text(aes(label=round(mean_price, 2)), position=position_dodge(width=0.9)) +
 facet_wrap(~ cab_type) +
-labs(title = "Comparing weekend and weekday pricing to holiday pricing", x="holiday", y="mean_price") +
+labs(title = "Comparing weekend and weekday pricing to holiday pricing", x="Holiday", y="Mean Price") +
   coord_flip() 
 ```
-
+```{r}
+ggplot(merged_data, aes(x = holiday, y = price, fill = holiday)) +
+  geom_violin(trim = FALSE, bw = 2) +  
+  geom_boxplot(width = 0.1, outlier.shape = NA) +  
+  facet_wrap(~ cab_type) +
+  scale_y_continuous(limits = c(0, 60)) +  
+  labs(title = "Price Distribution by Holiday",
+       x = "Holiday", y = "Price") +
+  theme_minimal() +
+  theme(legend.position = "none") 
+```
 
 ```{r}
 #Comparing rush hour price for weekdays to price on weekends
 rush_weekdays_normal_weekends_summary <- merged_data %>%
-  group_by(rush_hour, is_weekend, cab_combo) %>%
+  group_by(rush_hour, is_weekend, cab_combo, cab_type) %>%
   summarise(
     n = n(),
     mean_price = mean(price, na.rm = TRUE),
     median_price = median(price, na.rm = TRUE)
   )
+print(rush_weekdays_normal_weekends_summary)
 ```
 
 ```{r}
@@ -144,10 +198,40 @@ geom_text(aes(label=round(mean_price, 2)), position=position_dodge(width=0.9)) +
 facet_wrap(~ is_weekend,
   labeller = labeller(is_weekend = c("0" = "Weekday", "1" = "Weekend"))) +
 labs(title = "Comparing rush hour price for weekdays to price on normal weekends
-", x="rush_hour", y="mean_price") +
+", x="Rush Hour", y="Mean Price") +
   coord_flip() 
-```
 
+ggplot(data=rush_weekdays_normal_weekends_summary %>% filter(cab_type == "Lyft"),
+    mapping = aes(x=rush_hour, y=cab_combo, fill=mean_price)) +
+geom_tile() +
+facet_wrap(~ is_weekend, labeller = labeller(is_weekend = c("0" = "Weekday", "1" = "Weekend"))) +
+  scale_fill_gradient(low="white", high="blue") +
+geom_text(aes(label=round(mean_price, 2))) +
+labs(title = "Lyft - Comparing rush hour price for weekdays to price on normal weekends
+", x="Rush Hour", y="Mean Price") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(data=rush_weekdays_normal_weekends_summary %>% filter(cab_type == "Uber"),
+    mapping = aes(x=rush_hour, y=cab_combo, fill=mean_price)) +
+geom_tile() +
+facet_wrap(~ is_weekend, labeller = labeller(is_weekend = c("0" = "Weekday", "1" = "Weekend"))) +
+  scale_fill_gradient(low="white", high="blue") +
+geom_text(aes(label=round(mean_price, 2))) +
+labs(title = "Uber - Comparing rush hour price for weekdays to price on normal weekends
+", x="Rush Hour", y="Mean Price") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r}
+ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
+  geom_violin(trim = FALSE, bw = 2) +  
+  geom_boxplot(width = 0.1, outlier.shape = NA) +  
+  facet_wrap(~ cab_type) +
+  scale_y_continuous(limits = c(0, 60)) +  
+  labs(title = "Price Distribution by Rush Hour",
+       x = "Rush Hour", y = "Price") +
+  theme_minimal() +
+  theme(legend.position = "none") 
+```
 
 ```{r}
 #Compare cab_combo, holiday and surge multiplier
@@ -170,9 +254,30 @@ geom_bar(
   position = "dodge") +
 geom_text(aes(label=round(mean_surge, 2)), position=position_dodge(width=0.9)) +
 facet_wrap(~ cab_type) +
-labs(title = "Compare cab_combo, holiday and surge multiplier", x="cab type", y="surge pricing") +
+labs(title = "Compare Cab Combo, Holiday and Surge multiplier", x="Cab Type", y="Surge Pricing") +
   coord_flip() 
 ```
+
+```{r}
+ggplot(data=holiday_surge_summary %>% filter(cab_type == "Lyft"), 
+    mapping = aes(x=holiday, y=cab_combo, fill=mean_surge)) +
+geom_tile() +
+  scale_fill_gradient(low="white", high="blue") +
+geom_text(aes(label=round(mean_surge, 2))) +
+labs(title = "Lyft - Compare Cab Combo, Holiday and Surge multiplier
+", x="Holiday", y="Cab Combo") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(data=holiday_surge_summary %>% filter(cab_type == "Uber"), 
+    mapping = aes(x=holiday, y=cab_combo, fill=mean_surge)) +
+geom_tile() +
+  scale_fill_gradient(low="white", high="blue") +
+geom_text(aes(label=round(mean_surge, 2))) +
+labs(title = "Uber - Compare Cab Combo, Holiday and Surge multiplier
+", x="Holiday", y="Cab Combo") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
 
 
 ```{r}
@@ -191,8 +296,7 @@ normal_time_holiday_time_summary <- merged_data %>%
 ggplot(data=normal_time_holiday_time_summary %>% filter(cab_type == "Lyft"), mapping =aes(x=hour, y=mean_price, color=holiday)) +
 geom_line() +
 facet_wrap(~ cab_combo) +
-labs(title = "Compare time of day price on normal days to time of day on holiday
-", x="hour", y="mean_price") 
+labs(title = "Compare Cost of Rides on Normal Days to Holiday", x="hour", y="mean_price") 
 ```
 
 
@@ -215,7 +319,7 @@ geom_bar(
   position = "dodge") +
 facet_wrap(~ cab_type) +
 geom_text(aes(label=round(mean_price, 2)), position=position_dodge(width=0.9)) +
-labs(title = "Compare pricing on weekday holidays to rush hour pricing") +
+labs(title = "Compare Pricing on Weekday Holidays to Rush Hour Pricing") +
   coord_flip()
 
 ggplot(data=weekday_holiday_rush_summary, mapping =aes(x=rush_hour, y=holiday, fill=mean_price)) +
@@ -224,7 +328,8 @@ facet_wrap(~ cab_type) +
   scale_fill_gradient(low="white", high="red") +
 geom_text(aes(label=round(mean_price, 2))) +
 labs(title = "Compare pricing on weekday holidays to rush hour pricing
-", x="rush_hour", y="holiday")
+", x="Rush Hour", y="Holiday") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 
@@ -249,8 +354,8 @@ labs(title = "Analyze hourly price on normal days of the week
 ggplot(data=normal_rush_dayofweek_summary %>% filter(cab_type == "Uber"), mapping =aes(x=hour, y=mean_price, color=day_of_week)) +
 geom_line() +
 facet_wrap(~ cab_combo) +
-labs(title = "Analyze hourly price on normal days of the week
-", x="hour", y="mean_price") 
+labs(title = "Analyze Hourly Price on Normal Days of the Week
+", x="Hour", y="Mean Price") 
 ```
 
 ```{r}
@@ -286,53 +391,52 @@ merged_data %>%
   summarise(
     n = n(),
   )
+#The numbers are all very similar. Did the creator of the dataset do this on purpose or is this the true distribution of rides chosen.
 ```
 
-
-```{r}
-#How many people use the apps on weekends vs. weekdays
-
-
-```
 
 
 ```{r}
 #Modelling GLM
-
-glm_model_price <- glm(price ~ holiday + day_of_week + hour + cab_combo + is_weekend,
-                         data = merged_data,
-                         family = Gamma(link = "log"))
+glm_model_price <- glm(price ~ holiday + day_of_week + hour + cab_combo,
+                      data = merged_data,
+                      family = Gamma(link = "log"))
 summary(glm_model_price)
-plot(glm_model_price)
+appraise(glm_model_price)
+#the plot is non-linear so GAM is the better choice for this data
 ```
 
 ```{r}
 #Modelling GAM
-gam_model_price <- gam(price ~ holiday + day_of_week + s(hour) + cab_combo + is_weekend,
+gam_model_price <- gam(price ~ holiday + day_of_week + s(hour) + cab_combo,
                       data = merged_data,
                       family = Gamma(link = "log"))
 summary(gam_model_price)
-plot(glm_model_price)
+appraise(gam_model_price)
+plot(gam_model_price)
+draw(gam_model_price)
+#the plot is non-linear so GAM is the better choice for this data
+
 ```
 
 ```{r}
-#Modelling GLM
+merged_data$gam_fitted <- predict(gam_model_price, type = "response")
 
-glm_model_surge <- glm(surge_multiplier ~ holiday + day_of_week + hour + cab_combo + is_weekend,
-                         data = merged_data,
-                         family = Gamma(link = "log"))
-summary(glm_model_surge)
-plot(glm_model_price)
+ggplot(data=merged_data, aes(x = cab_combo, y = gam_fitted, fill = cab_combo)) +
+  geom_boxplot() +
+  facet_wrap(~ cab_type, scales = "free_x") +
+  labs(title = "GAM Predicted Prices by Cab Type",
+       x = "Cab Type", y = "Price") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")
 ```
+
 
 ```{r}
-#Modelling GAM
-gam_model_surge <- gam(surge_multiplier ~ holiday + day_of_week + s(hour) + cab_combo + is_weekend,
-                      data = merged_data,
-                      family = Gamma(link = "log"))
-summary(gam_model_surge)
-plot(glm_model_price)
+AIC(gam_model_price, glm_model_price)
+#the GLM fits better even though the GAM captures the non-linearity better. But we should go with the GAM because of the non-linearity and better understanding the data.
 ```
+
 
 
 ```{r}
@@ -343,5 +447,10 @@ plot(glm_model_price)
 #https://www.r-bloggers.com/2021/09/adding-text-labels-to-ggplot2-bar-chart-2/
 #https://r-graph-gallery.com/79-levelplot-with-ggplot2.html
 #https://www.codecademy.com/resources/docs/general/file-paths
+#https://cran.r-project.org/web/packages/gratia/vignettes/gratia.html
+#https://stats.stackexchange.com/questions/664508/model-diagnostics-for-gam-generalised-additive-model
+#https://gavinsimpson.github.io/gratia/
+#https://www.atlassian.com/data/charts/violin-plot-complete-guide
+#https://ggplot2.tidyverse.org/reference/geom_violin.html#:~:text=Source:%20R/geom%2Dviolin,same%20way%20as%20a%20boxplot.
 ```
 
