@@ -9,6 +9,7 @@ library(lubridate)
 library(ggplot2)
 library(gratia)
 library(mgcv)
+library(DescTools)
 
 # Load merged data
 merged_data <- read.csv("../merged_data_cleaned.csv")
@@ -18,7 +19,7 @@ merged_data <- merged_data %>%
   mutate(
     date = as.Date(hour_ts),
     hour = hour(parse_date_time(hour_ts, orders = c("ymd HMS", "ymd"))), #Note for myself! I changed this from Unix time so this needs to be ymd_hms() now instead
-    day_of_week = wday(date, label = TRUE),
+    day_of_week = factor(wday(date, label = TRUE), ordered = FALSE),
     is_weekend = ifelse(wday(date) %in% c(1, 7), 1,0),
     rush_hour = case_when(
       is.na(hour) ~ NA_character_, #Some data points don't have a time
@@ -60,7 +61,7 @@ day_of_week <- merged_data %>%
     mean_price = mean(price, na.rm = TRUE),
     median_price = median(price, na.rm = TRUE)
   )
-print(day_of_week)
+print(day_of_week, n = Inf)
 ```
 
 ```{r}
@@ -254,7 +255,7 @@ geom_bar(
   position = "dodge") +
 geom_text(aes(label=round(mean_surge, 2)), position=position_dodge(width=0.9)) +
 facet_wrap(~ cab_type) +
-labs(title = "Compare Cab Combo, Holiday and Surge multiplier", x="Cab Type", y="Surge Pricing") +
+labs(title = "Compare Cab Combo, Holiday & Surge multiplier", x="Cab Type", y="Surge Pricing") +
   coord_flip() 
 ```
 
@@ -398,43 +399,30 @@ merged_data %>%
 
 ```{r}
 #Modelling GLM
-glm_model_price <- glm(price ~ holiday + day_of_week + hour + cab_combo,
+glm_model_price <- glm(price ~ holiday + day_of_week + hour + cab_combo + surge_multiplier,
                       data = merged_data,
                       family = Gamma(link = "log"))
 summary(glm_model_price)
 appraise(glm_model_price)
-#the plot is non-linear so GAM is the better choice for this data
+PseudoR2(glm_model_price, which = NULL)
 ```
 
 ```{r}
 #Modelling GAM
-gam_model_price <- gam(price ~ holiday + day_of_week + s(hour) + cab_combo,
+gam_model_price <- gam(price ~ holiday + day_of_week + s(hour) + cab_combo + surge_multiplier,
                       data = merged_data,
                       family = Gamma(link = "log"))
 summary(gam_model_price)
 appraise(gam_model_price)
-plot(gam_model_price)
 draw(gam_model_price)
-#the plot is non-linear so GAM is the better choice for this data
+#the plot is non-linear however since hour is the only smoothable variable and the rest are categorical GLM may be best overall.
 
-```
-
-```{r}
-merged_data$gam_fitted <- predict(gam_model_price, type = "response")
-
-ggplot(data=merged_data, aes(x = cab_combo, y = gam_fitted, fill = cab_combo)) +
-  geom_boxplot() +
-  facet_wrap(~ cab_type, scales = "free_x") +
-  labs(title = "GAM Predicted Prices by Cab Type",
-       x = "Cab Type", y = "Price") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "none")
 ```
 
 
 ```{r}
 AIC(gam_model_price, glm_model_price)
-#the GLM fits better even though the GAM captures the non-linearity better. But we should go with the GAM because of the non-linearity and better understanding the data.
+#the GLM fits better and since most of the variables in this question are categorical then we will continue with the GLM.
 ```
 
 
@@ -452,5 +440,9 @@ AIC(gam_model_price, glm_model_price)
 #https://gavinsimpson.github.io/gratia/
 #https://www.atlassian.com/data/charts/violin-plot-complete-guide
 #https://ggplot2.tidyverse.org/reference/geom_violin.html#:~:text=Source:%20R/geom%2Dviolin,same%20way%20as%20a%20boxplot.
+#https://search.r-project.org/CRAN/refmans/DescTools/html/PseudoR2.html
+#https://www.rdocumentation.org/packages/DescTools/versions/0.99.60
+#https://stats.stackexchange.com/questions/82105/mcfaddens-pseudo-r2-interpretation
+#https://psychology.town/statistics/dispersion-concept-data-analysis/
 ```
 
