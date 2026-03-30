@@ -1,3 +1,12 @@
+# Set working directory to project root (works regardless of where the script is opened)
+# Finds the root by looking for the .Rproj file
+if (requireNamespace("here", quietly = TRUE)) {
+  setwd(here::here())
+} else {
+  # Fallback: if running from R/ folder, go up one level
+  if (grepl("/R$", getwd())) setwd("..")
+}
+
 # Load the data files
 library(data.table)
 library(dplyr)

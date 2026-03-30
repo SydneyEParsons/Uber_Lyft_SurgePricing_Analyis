@@ -1,0 +1,309 @@
+---
+title: "surge_multiplier"
+output: html_document
+date: "2026-03-09"
+---
+
+```{r setup, include=FALSE}
+# Set the root directory to the project root for all chunks
+knitr::opts_knit$set(root.dir = here::here())
+```
+
+# Factors Associated with Lyft Surge Pricing
+
+## Research Question
+
+**RQ2:** For Lyft rides, what factors, including weather conditions, time of day, day
+of week, and route, are associated with the occurrence of surge pricing?
+
+
+## Data Preparation
+
+```{r surge-prep}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(scales)
+library(lubridate)
+
+merged_df <- read.csv("merged_data_cleaned.csv")
+
+# Handle missing values
+merged_df$rain[is.na(merged_df$rain)] <- 0
+merged_df <- merged_df %>% filter(!is.na(price))
+
+# Create derived variables
+# Convert to Boston local time (EST = UTC-5 in Nov-Dec 2018) before extracting hour/day
+merged_df <- merged_df %>%
+  mutate(
+    time_stamp   = as.POSIXct(time_stamp, tz = "UTC"),
+    time_local   = with_tz(time_stamp, tzone = "America/New_York"),
+    hour_of_day  = hour(time_local),
+    # Bin hours into meaningful time periods to capture non-linear hourly patterns
+    time_period  = factor(case_when(
+      hour_of_day >= 6  & hour_of_day < 10 ~ "morning_rush",
+      hour_of_day >= 10 & hour_of_day < 16 ~ "midday",
+      hour_of_day >= 16 & hour_of_day < 20 ~ "evening_rush",
+      TRUE                                  ~ "night"
+    ), levels = c("midday", "morning_rush", "evening_rush", "night")),
+    # Use unordered factor so R applies treatment (dummy) coding, not polynomial contrasts
+    day_of_week  = factor(lubridate::wday(time_local, label = TRUE), ordered = FALSE),
+    route        = paste(source, "->", destination),
+    surge_binary = ifelse(surge_multiplier > 1, 1, 0)
+  )
+```
+
+
+## Exploratory Data Analysis
+
+```{r surge-platform-compare}
+# Confirm Uber surge is always 1, only Lyft has variation
+merged_df %>%
+  group_by(cab_type) %>%
+  summarise(
+    n_rides      = n(),
+    unique_surge = n_distinct(surge_multiplier),
+    min_surge    = min(surge_multiplier),
+    max_surge    = max(surge_multiplier),
+    pct_surge    = round(mean(surge_multiplier > 1) * 100, 2),
+    .groups = "drop"
+  )
+```
+
+```{r surge-lyft-subset}
+# Focus on Lyft only, exclude Shared rides
+# Shared rides have surge_multiplier = 1 in nearly all cases, causing
+# quasi-complete separation in logistic regression (coefficient -> -Inf)
+lyft_df <- merged_df %>%
+  filter(cab_type == "Lyft", name != "Shared")
+
+cat("Lyft rides (excl. Shared):", nrow(lyft_df), "\n")
+cat("Surge rate:", round(mean(lyft_df$surge_binary) * 100, 2), "%\n\n")
+cat("Surge multiplier distribution:\n")
+table(lyft_df$surge_multiplier)
+```
+
+```{r surge-by-source, fig.cap="Figure 1: Surge occurrence rate by pickup location (Lyft). Locations ordered by surge rate."}
+source_surge <- lyft_df %>%
+  group_by(source) %>%
+  summarise(
+    surge_rate = mean(surge_binary),
+    n_rides    = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(surge_rate))
+
+ggplot(source_surge, aes(x = reorder(source, surge_rate), y = surge_rate)) +
+  geom_bar(stat = "identity", fill = "steelblue", alpha = 0.8) +
+  geom_text(aes(label = percent(surge_rate, accuracy = 0.1)),
+            hjust = -0.1, size = 3.2) +
+  scale_y_continuous(labels = percent, expand = expansion(mult = c(0, 0.15))) +
+  coord_flip() +
+  labs(title = "Surge Rate by Pickup Location (Lyft)",
+       subtitle = "Percentage of rides with surge_multiplier > 1",
+       x = NULL, y = "Surge Rate") +
+  theme_minimal()
+```
+
+```{r surge-by-dest, fig.cap="Figure 2: Surge occurrence rate by dropoff location (Lyft)."}
+dest_surge <- lyft_df %>%
+  group_by(destination) %>%
+  summarise(
+    surge_rate = mean(surge_binary),
+    n_rides    = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(surge_rate))
+
+ggplot(dest_surge, aes(x = reorder(destination, surge_rate), y = surge_rate)) +
+  geom_bar(stat = "identity", fill = "steelblue", alpha = 0.8) +
+  geom_text(aes(label = percent(surge_rate, accuracy = 0.1)),
+            hjust = -0.1, size = 3.2) +
+  scale_y_continuous(labels = percent, expand = expansion(mult = c(0, 0.15))) +
+  coord_flip() +
+  labs(title = "Surge Rate by Dropoff Location (Lyft)",
+       subtitle = "Percentage of rides with surge_multiplier > 1",
+       x = NULL, y = "Surge Rate") +
+  theme_minimal()
+```
+
+```{r surge-by-hour, fig.cap="Figure 3: Hourly surge rate for Lyft. Higher rates during peak demand periods suggest time-of-day is an important predictor."}
+hour_surge <- lyft_df %>%
+  group_by(hour_of_day) %>%
+  summarise(surge_rate = mean(surge_binary), n_rides = n(), .groups = "drop")
+
+ggplot(hour_surge, aes(x = hour_of_day, y = surge_rate)) +
+  geom_line(color = "steelblue", linewidth = 1) +
+  geom_point(color = "steelblue", size = 2) +
+  scale_y_continuous(labels = percent) +
+  scale_x_continuous(breaks = seq(0, 23, 2)) +
+  labs(title = "Hourly Surge Rate (Lyft)",
+       x = "Hour of Day", y = "Surge Rate") +
+  theme_minimal()
+```
+
+```{r surge-weather-compare, fig.cap="Figure 4: Standardized weather variable means for surge vs. non-surge Lyft rides. Small differences indicate weather is not the dominant surge trigger."}
+weather_vars <- c("temp", "wind", "humidity", "clouds", "pressure", "rain")
+
+# Standardize weather variables for comparable scale
+lyft_std <- lyft_df %>%
+  mutate(across(all_of(weather_vars), ~ (. - mean(., na.rm = TRUE)) / sd(., na.rm = TRUE))) %>%
+  mutate(Surge = ifelse(surge_binary == 1, "Surge", "No Surge")) %>%
+  select(Surge, all_of(weather_vars)) %>%
+  pivot_longer(-Surge, names_to = "Variable", values_to = "Value")
+
+lyft_means <- lyft_std %>%
+  group_by(Surge, Variable) %>%
+  summarise(mean_val = mean(Value, na.rm = TRUE), .groups = "drop")
+
+ggplot(lyft_means, aes(x = Variable, y = mean_val, fill = Surge)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.7),
+           width = 0.6, alpha = 0.8) +
+  scale_fill_manual(values = c("No Surge" = "grey60", "Surge" = "steelblue")) +
+  labs(title = "Weather Conditions: Surge vs. Non-Surge (Lyft)",
+       subtitle = "Standardized means (z-scores); small differences suggest weather is not the primary surge driver",
+       x = NULL, y = "Standardized Mean") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 20, hjust = 1))
+```
+
+```{r surge-time-heatmap, fig.cap="Figure 5: Surge rate by time period and day of week (Lyft). Darker cells indicate higher surge probability."}
+time_day_surge <- lyft_df %>%
+  group_by(time_period, day_of_week) %>%
+  summarise(
+    surge_rate = mean(surge_binary),
+    n_rides    = n(),
+    .groups = "drop"
+  )
+
+ggplot(time_day_surge, aes(x = day_of_week, y = time_period, fill = surge_rate)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = percent(surge_rate, accuracy = 0.1)), size = 3.5) +
+  scale_fill_gradient(low = "white", high = "steelblue", labels = percent) +
+  labs(title = "Surge Rate by Time Period and Day of Week (Lyft)",
+       x = NULL, y = NULL, fill = "Surge Rate") +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
+```
+
+
+## GLM: Logistic Regression (Primary Model)
+
+```{r surge-glm}
+glm_surge <- glm(
+  surge_binary ~ temp + wind + humidity + clouds + pressure + rain +
+                 time_period + day_of_week +
+                 source + destination + name,
+  data   = lyft_df,
+  family = binomial(link = "logit")
+)
+
+summary(glm_surge)
+```
+
+```{r surge-glm-deviance}
+# Analysis of deviance to test overall significance of each predictor group
+anova(glm_surge, test = "Chisq")
+```
+
+
+## GLMM: Robustness Check with Random Effects
+
+```{r surge-glmm}
+library(lme4)
+
+glmm_surge <- glmer(
+  surge_binary ~ temp + wind + humidity + clouds + pressure + rain +
+                 time_period + day_of_week + name +
+                 (1 | source) + (1 | destination),
+  data    = lyft_df,
+  family  = binomial(link = "logit"),
+  nAGQ    = 0,
+  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 50000))
+)
+
+summary(glmm_surge)
+```
+
+
+## Model Comparison
+
+```{r surge-compare}
+# 1. Check random effect variance estimates
+cat("Random Effect Variance Estimates:\n")
+print(VarCorr(glmm_surge))
+cat("\nIf variances are near zero, fixed effects already capture location variation.\n\n")
+
+# 2. Likelihood ratio test: GLM (no random effects) vs GLMM (random intercepts)
+cat("Likelihood Ratio Test:\n")
+lrt_stat <- -2 * (logLik(glm_surge) - logLik(glmm_surge))
+lrt_df   <- 2  # two random effect variance parameters (source + destination)
+lrt_p    <- pchisq(as.numeric(lrt_stat), df = lrt_df, lower.tail = FALSE)
+cat("  Chi-sq statistic:", round(as.numeric(lrt_stat), 2), "\n")
+cat("  df:", lrt_df, "\n")
+cat("  p-value:", format.pval(lrt_p, digits = 4), "\n")
+cat("  (Note: p-value is conservative due to boundary testing)\n")
+```
+
+
+## Odds Ratios for Fixed Effects (GLM)
+
+```{r surge-odds-ratio, fig.cap="Figure 6: Odds ratios for weather and time fixed effects from the GLM. Error bars show 95% confidence intervals."}
+fe <- coef(glm_surge)
+se <- summary(glm_surge)$coefficients[, "Std. Error"]
+
+# Select weather + time period variables
+keep_pattern <- c("temp", "wind", "humidity", "clouds", "pressure", "rain", "time_period")
+idx <- sapply(names(fe), function(x) any(sapply(keep_pattern, function(p) startsWith(x, p))))
+
+or_df <- data.frame(
+  Variable = names(fe)[idx],
+  OR       = exp(fe[idx]),
+  Lower    = exp(fe[idx] - 1.96 * se[idx]),
+  Upper    = exp(fe[idx] + 1.96 * se[idx])
+)
+# Clean up variable names for display
+or_df$Variable <- gsub("time_period", "Time: ", or_df$Variable)
+
+ggplot(or_df, aes(x = reorder(Variable, OR), y = OR)) +
+  geom_point(size = 3, color = "steelblue") +
+  geom_errorbar(aes(ymin = Lower, ymax = Upper), width = 0.2, color = "steelblue") +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "grey50") +
+  coord_flip() +
+  labs(title = "Odds Ratios for Surge Occurrence (GLM)",
+       subtitle = "Values > 1: higher surge probability; dashed line = no effect",
+       x = NULL, y = "Odds Ratio (95% CI)") +
+  theme_minimal()
+```
+
+
+## GLM Diagnostics
+
+```{r surge-diagnostics, fig.cap="Figure 7: Binned residual plot for the GLM. Points outside the grey bands may indicate model misspecification."}
+fitted_vals <- fitted(glm_surge)
+resids      <- residuals(glm_surge, type = "response")
+
+n_bins <- 40
+bin_breaks <- quantile(fitted_vals, probs = seq(0, 1, length.out = n_bins + 1))
+bins <- cut(fitted_vals, breaks = bin_breaks, include.lowest = TRUE)
+
+bin_df <- data.frame(fitted_vals, resids, bins) %>%
+  group_by(bins) %>%
+  summarise(
+    avg_fitted = mean(fitted_vals),
+    avg_resid  = mean(resids),
+    se_resid   = sd(resids) / sqrt(n()),
+    n          = n(),
+    .groups = "drop"
+  ) %>%
+  filter(!is.na(bins))
+
+ggplot(bin_df, aes(x = avg_fitted, y = avg_resid)) +
+  geom_point(color = "steelblue", size = 2) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_ribbon(aes(ymin = -2 * se_resid, ymax = 2 * se_resid),
+              alpha = 0.15, fill = "grey50") +
+  labs(title = "Binned Residual Plot (GLM)",
+       x = "Average Fitted Probability", y = "Average Residual") +
+  theme_minimal()
+```

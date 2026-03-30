@@ -1,0 +1,176 @@
+---
+title: "weather_effect"
+output: html_document
+date: "2026-03-06"
+---
+
+```{r setup, include=FALSE}
+# Set the root directory to the project root for all chunks
+# This ensures read.csv("merged_data_cleaned.csv") works in every chunk
+knitr::opts_knit$set(root.dir = here::here())
+```
+
+# Effect of Weather Conditions on Ride Price
+
+## Research Question
+
+**RQ1:** After controlling for distance, route, cab type, and service level, do weather
+conditions (temperature, wind, humidity, cloud cover, pressure, and rain) have a
+significant effect on ride price, and is the relationship non-linear?
+
+
+## Data Preparation and Feature Engineering
+
+```{r weather-prep}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(lubridate)
+
+merged_df <- read.csv("merged_data_cleaned.csv")
+
+# Replace rain NA with 0 (NA indicates no rain was recorded)
+merged_df$rain[is.na(merged_df$rain)] <- 0
+
+# Remove rows with missing price
+merged_df <- merged_df %>% filter(!is.na(price))
+
+# Create useful derived variables
+# Data was collected in Boston (EST = UTC-5 in Nov-Dec 2018)
+merged_df <- merged_df %>%
+  mutate(
+    time_stamp  = as.POSIXct(time_stamp, tz = "UTC"),
+    hour_ts     = as.POSIXct(hour_ts, tz = "UTC"),
+    time_local  = with_tz(time_stamp, tzone = "America/New_York"),
+    hour_of_day = hour(time_local),
+    day_of_week = lubridate::wday(time_local, label = TRUE),
+    cab_label   = paste(cab_type, name, sep = "-"),
+    route       = paste(source, "->", destination),
+    surge_binary = ifelse(surge_multiplier > 1, 1, 0)
+  )
+
+cat("Dataset dimensions:", nrow(merged_df), "rows x", ncol(merged_df), "columns\n")
+cat("Date range:", as.character(min(merged_df$time_stamp)),
+    "to", as.character(max(merged_df$time_stamp)), "\n")
+```
+
+
+## Service Type Overview
+
+```{r cab-label-analysis}
+# Order quantity and average price for each cab_type-name combination
+cab_summary <- merged_df %>%
+  group_by(cab_label) %>%
+  summarise(
+    order_count = n(),
+    avg_price   = round(mean(price, na.rm = TRUE), 2),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(order_count))
+
+print(cab_summary)
+```
+
+
+## Exploratory Data Analysis
+
+```{r weather-summary}
+# Summary statistics for weather variables
+merged_df %>%
+  select(temp, clouds, pressure, humidity, wind, rain) %>%
+  summary()
+```
+
+```{r weather-price-hist, fig.cap="Figure 1: Distribution of ride prices. The strong right skew supports using a Gamma family GAM rather than Gaussian regression."}
+ggplot(merged_df, aes(x = price)) +
+  geom_histogram(bins = 60, fill = "steelblue", color = "white", alpha = 0.8) +
+  labs(title = "Distribution of Ride Prices",
+       x = "Price (USD)", y = "Count") +
+  theme_minimal()
+```
+
+```{r weather-temp-scatter, fig.cap="Figure 2: Temperature vs. price (log scale) by platform. A GAM smoother on a random subsample shows the trend."}
+set.seed(42)
+sample_df <- merged_df %>% slice_sample(n = 20000)
+
+ggplot(merged_df, aes(x = temp, y = price)) +
+  geom_point(alpha = 0.02, size = 0.3, color = "grey40") +
+  geom_smooth(data = sample_df, method = "gam", formula = y ~ s(x),
+              se = TRUE, color = "steelblue", linewidth = 1) +
+  scale_y_log10() +
+  facet_wrap(~ cab_type) +
+  labs(title = "Temperature vs. Price (Log Scale) by Platform",
+       x = "Temperature (F)", y = "Price (USD, log scale)") +
+  theme_minimal()
+```
+
+```{r weather-heatmap, fig.cap="Figure 3: Pearson correlation between weather variables and price for each service type. These are unadjusted and do not control for distance or route."}
+cor_results <- merged_df %>%
+  group_by(cab_label) %>%
+  summarise(
+    Temperature = cor(price, temp,     use = "complete.obs"),
+    Clouds      = cor(price, clouds,   use = "complete.obs"),
+    Pressure    = cor(price, pressure, use = "complete.obs"),
+    Humidity    = cor(price, humidity,  use = "complete.obs"),
+    Wind        = cor(price, wind,     use = "complete.obs"),
+    Rain        = cor(price, rain,     use = "complete.obs"),
+    .groups = "drop"
+  )
+
+cor_long <- cor_results %>%
+  pivot_longer(-cab_label, names_to = "Weather Variable", values_to = "Correlation")
+
+ggplot(cor_long, aes(x = `Weather Variable`, y = cab_label, fill = Correlation)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(Correlation, 3)), size = 2.8) +
+  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B", midpoint = 0) +
+  labs(title = "Correlation Between Weather and Price by Service Type",
+       subtitle = "Unadjusted Pearson correlations (not controlling for distance or route)",
+       x = NULL, y = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+```
+
+
+## GAM Analysis
+
+```{r gam-fit}
+library(mgcv)
+# bam() is the large dataset version of gam()
+# Gamma family + log link handles right-skewed positive prices
+gam_model <- bam(
+  price ~ s(temp, k = 8) + s(wind, k = 4) + s(humidity, k = 4) +
+          s(clouds, k = 5) + s(pressure, k = 5) + s(rain, k = 4) +
+          distance + cab_type + name + source + destination,
+  data    = merged_df,
+  family  = Gamma(link = "log"),
+  method  = "fREML",
+  discrete = TRUE
+)
+
+summary(gam_model)
+```
+
+
+## Smooth Effect Plots
+
+```{r gam-smooth-plots, fig.height=8, fig.cap="Figure 4: Estimated smooth effects of weather variables on log(price). Shaded areas are 95% CIs."}
+par(mfrow = c(3, 2), mar = c(4, 4, 2, 1))
+plot(gam_model, shade = TRUE, shade.col = "lightblue",
+     residuals = FALSE, rug = TRUE, se = TRUE)
+par(mfrow = c(1, 1))
+```
+
+
+## Model Diagnostics
+
+```{r gam-diagnostics, fig.height=7, fig.cap="Figure 5: GAM diagnostic plots. Top-left: QQ plot. Top-right: residuals vs. linear predictor. Bottom-left: histogram of residuals. Bottom-right: response vs. fitted."}
+par(mfrow = c(2, 2))
+gam.check(gam_model)
+par(mfrow = c(1, 1))
+```
+
+```{r gam-fit-stats}
+cat("Adjusted R-squared:", summary(gam_model)$r.sq, "\n")
+cat("Deviance explained:", round(summary(gam_model)$dev.expl * 100, 2), "%\n")
+```
