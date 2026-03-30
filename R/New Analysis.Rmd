@@ -420,12 +420,6 @@ draw(gam_model_price)
 ```
 
 
-```{r}
-AIC(gam_model_price, glm_model_price)
-#the GLM fits better and since most of the variables in this question are categorical then we will continue with the GLM.
-```
-
-
 
 ```{r}
 #References
