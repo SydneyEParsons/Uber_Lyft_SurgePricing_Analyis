@@ -6,6 +6,8 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+*Note:* Before running the code please generate the merged_data_cleaned.csv. To do this ensure you have saved the raw data files from the repository and then run Cleaning And Merging The Data.R to generate the merged_data_cleaned.csv. Due to file size limitations we were unable to upload the compiled merged_data_cleaned.csv file directly.
+
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -34,7 +36,6 @@ Link to GitHub: https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis
 
 Abstract (150 words):
 This is an analysis of Uber and Lyft Pricing in Boston Massachusetts in November to December of 2018 (Munde, 2019). In it we cover three main research questions with the goal of determining the overall impacts on pricing for Uber and Lyft. 
-Before running the code please generate the merged_data_cleaned.csv. To do this ensure you have saved the raw data files from the repository and then run Cleaning And Merging The Data.R to generate the merged_data_cleaned.csv. Due to file size limitations we were unable to upload the compiled merged_data_cleaned.csv file directly.
 
 
 Keywords (Max 10):
