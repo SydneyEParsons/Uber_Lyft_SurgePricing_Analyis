@@ -27,4 +27,71 @@ library(DescTools)
 merged_data <- read.csv("../merged_data_cleaned.csv")
 ```
 
+Front Matter:
+Uber and Lyft Surge Pricing Analysis
+By Lingyun Jiang (B00850695) and Sydney Parsons (B01068132)
+Data Analysis STAT 4620/5620 Winter 25-26
+Link to GitHub: https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis
+
+Abstract (150 words):
+
+
+
+Keywords (Max 10):
+
+
+
+Introduction: 
+Research questions and background information.
+
+Data Description:
+Describe the data and each variable, including measurement units.
+*Insert visualization for EDA for the three questions*
+Research Question #1 
+```{r}
+
+```
+Research Question #2
+```{r}
+
+```
+
+Research Question #3
+```{r}
+
+```
+
+Methods:
+Research Question #1 
+Research Question #2 
+Research Question #3 
+*Discuss methods chosen and why*
+
+Analysis:
+Research Question #1 (*Insert code and validation into the vignette*)
+```{r}
+
+```
+
+Research Question #2 (*Insert code and validation into the vignette*)
+```{r}
+
+```
+
+Research Question #3 (*Insert code and validation into the vignette*)
+```{r}
+
+```
+
+
+Results:
+Research Question #1 
+Research Question #2 
+Research Question #3
+*Discuss the analysis and the results why or why not it worked*
+
+Conclusions:
+
+
+References:
 
