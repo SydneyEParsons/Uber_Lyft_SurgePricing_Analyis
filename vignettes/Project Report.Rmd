@@ -1,5 +1,5 @@
 ---
-title: "Research Question 3"
+title: "Project Report"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Project Report}
