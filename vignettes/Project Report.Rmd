@@ -38,7 +38,15 @@ Abstract (150 words):
 
 
 Keywords (Max 10):
-
+- Uber
+- Lyft
+- Pricing
+- Surge
+- Holiday
+- Rushhour
+- DOW
+- Weather
+- Distance
 
 
 Introduction: 
