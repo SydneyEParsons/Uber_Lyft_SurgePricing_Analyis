@@ -1,0 +1,30 @@
+---
+title: "Research Question 3"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Project Report}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+*Note*: Before running the code please run Cleaning And Merging The Data.R to generate the merged_data_cleaned.csv. The raw data files required for this analysis are in the github repository, due to size limitations we were unable to upload the compiled merged_data_cleaned.csv file.
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(UberLyftAnalysis)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(gratia)
+library(mgcv)
+library(DescTools)
+
+merged_data <- read.csv("../merged_data_cleaned.csv")
+```
+
+
