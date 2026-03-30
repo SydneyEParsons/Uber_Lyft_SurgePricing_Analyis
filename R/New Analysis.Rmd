@@ -35,6 +35,8 @@ merged_data <- merged_data %>%
     cab_combo = paste(cab_type, name, sep = "-") #Combining cab_type and name
   )
 
+model_data <- merged_data %>% filter(!is.na(hour)) #taking na values into account and omitting those rows
+
 lyft_data <- merged_data %>%
   filter(cab_type == "Lyft")
 
@@ -108,7 +110,7 @@ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 ```{r}
 ggplot(merged_data, aes(x = day_of_week, y = price, fill = day_of_week)) +
-  geom_violin(trim = FALSE, bw = 2) +  
+  geom_violin(trim = FALSE) +  
   geom_boxplot(width = 0.1, outlier.shape = NA) +  
   facet_wrap(~ cab_type) +
   scale_y_continuous(limits = c(0, 60)) +  
@@ -168,7 +170,7 @@ labs(title = "Comparing weekend and weekday pricing to holiday pricing", x="Holi
 ```
 ```{r}
 ggplot(merged_data, aes(x = holiday, y = price, fill = holiday)) +
-  geom_violin(trim = FALSE, bw = 2) +  
+  geom_violin(trim = FALSE) +  
   geom_boxplot(width = 0.1, outlier.shape = NA) +  
   facet_wrap(~ cab_type) +
   scale_y_continuous(limits = c(0, 60)) +  
@@ -224,7 +226,7 @@ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 ```{r}
 ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
-  geom_violin(trim = FALSE, bw = 2) +  
+  geom_violin(trim = FALSE) +  
   geom_boxplot(width = 0.1, outlier.shape = NA) +  
   facet_wrap(~ cab_type) +
   scale_y_continuous(limits = c(0, 60)) +  
