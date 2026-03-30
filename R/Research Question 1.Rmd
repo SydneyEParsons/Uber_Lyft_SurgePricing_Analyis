@@ -4,12 +4,6 @@ output: html_document
 date: "2026-03-06"
 ---
 
-```{r setup, include=FALSE}
-# Set the root directory to the project root for all chunks
-# This ensures read.csv("merged_data_cleaned.csv") works in every chunk
-knitr::opts_knit$set(root.dir = here::here())
-```
-
 # Effect of Weather Conditions on Ride Price
 
 ## Research Question
@@ -27,7 +21,7 @@ library(ggplot2)
 library(tidyr)
 library(lubridate)
 
-merged_df <- read.csv("merged_data_cleaned.csv")
+merged_df <- read.csv("../merged_data_cleaned.csv")
 
 # Replace rain NA with 0 (NA indicates no rain was recorded)
 merged_df$rain[is.na(merged_df$rain)] <- 0

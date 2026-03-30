@@ -4,11 +4,6 @@ output: html_document
 date: "2026-03-09"
 ---
 
-```{r setup, include=FALSE}
-# Set the root directory to the project root for all chunks
-knitr::opts_knit$set(root.dir = here::here())
-```
-
 # Factors Associated with Lyft Surge Pricing
 
 ## Research Question
@@ -26,7 +21,7 @@ library(tidyr)
 library(scales)
 library(lubridate)
 
-merged_df <- read.csv("merged_data_cleaned.csv")
+merged_df <- read.csv("../merged_data_cleaned.csv")
 
 # Handle missing values
 merged_df$rain[is.na(merged_df$rain)] <- 0
