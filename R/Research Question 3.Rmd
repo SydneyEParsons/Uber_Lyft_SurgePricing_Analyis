@@ -17,8 +17,9 @@ merged_data <- read.csv("../merged_data_cleaned.csv")
 #Make Weekend and Weekday Binary
 merged_data <- merged_data %>%
   mutate(
-    date = as.Date(hour_ts),
-    hour = hour(parse_date_time(hour_ts, orders = c("ymd HMS", "ymd"))), #Note for myself! I changed this from Unix time so this needs to be ymd_hms() now instead
+    hour_ts_boston = with_tz(ymd_hms(hour_ts, tz = "UTC"), tzone = "America/New_York"),
+    date = as.Date(hour_ts_boston),
+    hour = hour(hour_ts_boston),
     day_of_week = factor(wday(date, label = TRUE), ordered = FALSE),
     is_weekend = ifelse(wday(date) %in% c(1, 7), 1,0),
     rush_hour = case_when(
@@ -41,10 +42,10 @@ lyft_data <- merged_data %>%
   filter(cab_type == "Lyft")
 
 raw <- read.csv("../merged_data_cleaned.csv") #Shows how many data points don't have a time
-sum(!grepl(":", raw$hour_ts))
+sum(!grepl(":", raw$hour_ts_boston))
 
-class(merged_data$hour_ts)
-head(merged_data$hour_ts)
+class(merged_data$hour_ts_boston)
+head(merged_data$hour_ts_boston)
 ```
 
 
