@@ -23,8 +23,8 @@ merged_data <- merged_data %>%
     is_weekend = ifelse(wday(date) %in% c(1, 7), 1,0),
     rush_hour = case_when(
       is.na(hour) ~ NA_character_, #Some data points don't have a time
-      hour >= 7 & hour <= 9 ~ "Morning Rush",
-      hour >= 16 & hour <= 19 ~ "Evening Rush",
+      hour >= 6 & hour <= 10 ~ "Morning Rush",
+      hour >= 16 & hour <= 20 ~ "Evening Rush",
       TRUE ~ "Normal Hours"
     ),
     holiday = case_when(
