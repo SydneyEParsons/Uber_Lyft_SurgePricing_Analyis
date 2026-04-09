@@ -10,6 +10,7 @@ library(lubridate)
 library(ggplot2)
 library(gratia)
 library(mgcv)
+library(caret)
 library(DescTools)
 
 # Load merged data
@@ -36,8 +37,6 @@ merged_data <- merged_data %>%
     ),
     cab_combo = paste(cab_type, name, sep = "-") #Combining cab_type and name
   )
-
-model_data <- merged_data %>% filter(!is.na(hour)) #taking na values into account and omitting those rows
 
 lyft_data <- merged_data %>%
   filter(cab_type == "Lyft")
@@ -398,6 +397,21 @@ summary(glm_model_price)
 appraise(glm_model_price)
 PseudoR2(glm_model_price, which = NULL)
 ```
+
+```{r}
+#Validating GLM
+set.seed(42)
+train_control <- trainControl(method = "cv", number = 10)
+
+glm_kfold <- train(price ~ holiday + day_of_week + hour + cab_combo + surge_multiplier,
+                      data = merged_data,
+                      method="glm",
+                      family = Gamma(link = "log"),
+                      trControl = train_control,
+                      na.action = na.omit)
+print(glm_kfold)
+```
+
 
 ```{r}
 #Modelling GAM

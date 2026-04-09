@@ -23,6 +23,7 @@ library(lubridate)
 library(ggplot2)
 library(gratia)
 library(mgcv)
+library(caret)
 library(DescTools)
 
 merged_data <- read.csv("../merged_data_cleaned.csv")
