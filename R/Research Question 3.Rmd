@@ -3,6 +3,7 @@ title: "New Analysis"
 output: html_document
 date: "2026-03-07"
 ---
+
 ```{r}
 library(dplyr)
 library(lubridate)
@@ -48,12 +49,10 @@ class(merged_data$hour_ts_boston)
 head(merged_data$hour_ts_boston)
 ```
 
-
 ```{r}
 # check all combinations for cab_combo
 unique(merged_data$cab_combo)
 ```
-
 
 ```{r}
 #Compare day of week, price and cab_combo
@@ -77,7 +76,6 @@ ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")
 ```
-
 
 ```{r}
 ggplot(data=day_of_week, mapping =aes(x=day_of_week, y=mean_price, fill=cab_combo)) +
@@ -109,6 +107,7 @@ labs(title = "Uber - Compare day of week, price and cab_combo
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
+
 ```{r}
 ggplot(merged_data, aes(x = day_of_week, y = price, fill = day_of_week)) +
   geom_violin(trim = FALSE) +  
@@ -120,8 +119,6 @@ ggplot(merged_data, aes(x = day_of_week, y = price, fill = day_of_week)) +
   theme_minimal() +
   theme(legend.position = "none") 
 ```
-
-
 
 ```{r}
 #Compare weekday and weekends to price and cab_combo
@@ -146,7 +143,6 @@ labs(title = "Compare weekday and weekends to price and cab_combo", x="Is Weeken
   coord_flip() 
 ```
 
-
 ```{r}
 #Comparing weekend and weekday pricing to holiday pricing
 holiday_summary_detailed <- merged_data %>%
@@ -169,6 +165,7 @@ facet_wrap(~ cab_type) +
 labs(title = "Comparing weekend and weekday pricing to holiday pricing", x="Holiday", y="Mean Price") +
   coord_flip() 
 ```
+
 ```{r}
 ggplot(merged_data, aes(x = holiday, y = price, fill = holiday)) +
   geom_violin(trim = FALSE) +  
@@ -225,6 +222,7 @@ labs(title = "Uber - Comparing rush hour price for weekdays to price on normal w
 ", x="Rush Hour", y="Mean Price") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
 ```{r}
 ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
   geom_violin(trim = FALSE) +  
@@ -282,8 +280,6 @@ labs(title = "Uber - Compare Cab Combo, Holiday and Surge multiplier
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-
-
 ```{r}
 #Compare time of day price on normal days to time of day on holiday
 normal_time_holiday_time_summary <- merged_data %>%
@@ -302,7 +298,6 @@ geom_line() +
 facet_wrap(~ cab_combo) +
 labs(title = "Compare Cost of Rides on Normal Days to Holiday", x="hour", y="mean_price") 
 ```
-
 
 ```{r}
 #Compare pricing on weekday holidays to rush hour pricing
@@ -336,7 +331,6 @@ labs(title = "Compare pricing on weekday holidays to rush hour pricing
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-
 ```{r}
 #Analyze hourly price on normal days of the week
 normal_rush_dayofweek_summary <- merged_data %>%
@@ -348,6 +342,7 @@ normal_rush_dayofweek_summary <- merged_data %>%
     median_price = median(price, na.rm = TRUE)
   )
 ```
+
 ```{r}
 ggplot(data=normal_rush_dayofweek_summary %>% filter(cab_type == "Lyft"), mapping =aes(x=hour, y=mean_price, color=day_of_week)) +
 geom_line() +
@@ -366,8 +361,6 @@ labs(title = "Analyze Hourly Price on Normal Days of the Week
 #Looking at the plots above time has little to no impact on the prices. The cab type is what has the most influence on the price of Uber and Lyft rides.
 ```
 
-
-
 ```{r}
 #How big a difference is there in the days over the full time period
 merged_data %>%
@@ -376,8 +369,6 @@ merged_data %>%
     n = n(),
   )
 ```
-
-
 
 ```{r}
 #How many people use Uber vs. Lyft
@@ -397,8 +388,6 @@ merged_data %>%
   )
 #The numbers are all very similar. Did the creator of the dataset do this on purpose or is this the true distribution of rides chosen.
 ```
-
-
 
 ```{r}
 #Modelling GLM
@@ -420,26 +409,5 @@ appraise(gam_model_price)
 draw(gam_model_price)
 #the plot is non-linear however since hour is the only smoothable variable and the rest are categorical GLM may be best overall.
 
-```
-
-
-
-```{r}
-#References
-# https://www.neonscience.org/resources/learning-hub/tutorials/dc-convert-date-time-posix-r#:~:text=POSIXct-,The%20as.,often%20your%20local%20time%20zone.
-#https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/grep
-#https://r-graph-gallery.com/218-basic-barplots-with-ggplot2.html
-#https://www.r-bloggers.com/2021/09/adding-text-labels-to-ggplot2-bar-chart-2/
-#https://r-graph-gallery.com/79-levelplot-with-ggplot2.html
-#https://www.codecademy.com/resources/docs/general/file-paths
-#https://cran.r-project.org/web/packages/gratia/vignettes/gratia.html
-#https://stats.stackexchange.com/questions/664508/model-diagnostics-for-gam-generalised-additive-model
-#https://gavinsimpson.github.io/gratia/
-#https://www.atlassian.com/data/charts/violin-plot-complete-guide
-#https://ggplot2.tidyverse.org/reference/geom_violin.html#:~:text=Source:%20R/geom%2Dviolin,same%20way%20as%20a%20boxplot.
-#https://search.r-project.org/CRAN/refmans/DescTools/html/PseudoR2.html
-#https://www.rdocumentation.org/packages/DescTools/versions/0.99.60
-#https://stats.stackexchange.com/questions/82105/mcfaddens-pseudo-r2-interpretation
-#https://psychology.town/statistics/dispersion-concept-data-analysis/
 ```
 
