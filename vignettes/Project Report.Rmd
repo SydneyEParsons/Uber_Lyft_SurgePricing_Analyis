@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
+library(data.table)
 library(UberLyftAnalysis)
 library(dplyr)
 library(lubridate)
@@ -83,10 +84,18 @@ Research Question #1 (*Insert code and validation into the vignette*)
 
 ```
 
+Results:
+Research Question #1 *Discuss the analysis and the results why or why not it worked*
+
+
 Research Question #2 (*Insert code and validation into the vignette*)
 ```{r}
 
 ```
+
+Results:
+Research Question #2 *Discuss the analysis and the results why or why not it worked*
+
 
 Research Question #3 (*Insert code and validation into the vignette*)
 ```{r}
@@ -95,10 +104,8 @@ Research Question #3 (*Insert code and validation into the vignette*)
 
 
 Results:
-Research Question #1 
-Research Question #2 
-Research Question #3
-*Discuss the analysis and the results why or why not it worked*
+Research Question #3*Discuss the analysis and the results why or why not it worked*
+
 
 Conclusions:
 
