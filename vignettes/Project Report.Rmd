@@ -55,28 +55,38 @@ Keywords (Max 10):
 Introduction: 
 Research questions and background information.
 
+
 Data Description:
-Describe the data and each variable, including measurement units.
-*Insert visualization for EDA for the three questions*
-Research Question #1 
-```{r}
+- Data points description here**
 
-```
-Research Question #2
+Research Question #1 *Insert visualization for EDA for the three questions*
 ```{r}
 
 ```
 
-Research Question #3
+Research Question #2 *Insert visualization for EDA for the three questions*
 ```{r}
 
 ```
+
+Research Question #3 *Insert visualization for EDA for the three questions*
+```{r}
+
+```
+
+
 
 Methods:
-Research Question #1 
-Research Question #2 
-Research Question #3 
-*Discuss methods chosen and why*
+Research Question #1: *Discuss methods chosen and why*
+
+
+Research Question #2: *Discuss methods chosen and why*
+
+
+Research Question #3: *Discuss methods chosen and why*
+
+
+
 
 Analysis:
 Research Question #1 (*Insert code and validation into the vignette*)
@@ -84,18 +94,10 @@ Research Question #1 (*Insert code and validation into the vignette*)
 
 ```
 
-Results:
-Research Question #1 *Discuss the analysis and the results why or why not it worked*
-
-
 Research Question #2 (*Insert code and validation into the vignette*)
 ```{r}
 
 ```
-
-Results:
-Research Question #2 *Discuss the analysis and the results why or why not it worked*
-
 
 Research Question #3 (*Insert code and validation into the vignette*)
 ```{r}
@@ -103,11 +105,36 @@ Research Question #3 (*Insert code and validation into the vignette*)
 ```
 
 
+
 Results:
+Research Question #1 *Discuss the analysis and the results why or why not it worked*
+
+
+Research Question #1 (*Insert code and validation for the analysis into the vignette*)
+```{r}
+
+```
+
+Research Question #2 *Discuss the analysis and the results why or why not it worked*
+
+
+Research Question #2 (*Insert code and validation for the analysis into the vignette*)
+```{r}
+
+```
+
 Research Question #3*Discuss the analysis and the results why or why not it worked*
 
 
-Conclusions:
+Research Question #3 (*Insert code and validation for the analysis into the vignette*)
+```{r}
+
+```
+
+
+
+Conclusion:
+
 
 
 References:
