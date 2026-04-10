@@ -130,8 +130,14 @@ ggplot(cor_long, aes(x = `Weather Variable`, y = cab_label, fill = Correlation))
 
 ```{r gam-fit}
 library(mgcv)
-# bam() is the large dataset version of gam()
-# Gamma family + log link handles right-skewed positive prices
+# bam() is the large dataset version of gam(); equivalent to gam() but optimized for large N via discretized covariate methods.
+# Gamma family + log link handles right-skewed positive prices where variance increases with the mean.
+
+# Basis dimension (k) selection rationale:
+#   - temp (k=8): temperature has the widest range and most potential for complex non-linearity; higher k allows more flexibility.
+#   - clouds, pressure (k=5): moderate potential for non-linear effects.
+#   - wind, humidity, rain (k=4): limited variability in the data or sparse observations (rain is mostly zero); lower k avoids over fitting.
+# The effective degrees of freedom (edf) reported by summary() indicate how much of this flexibility the data actually support.
 gam_model <- bam(
   price ~ s(temp, k = 8) + s(wind, k = 4) + s(humidity, k = 4) +
           s(clouds, k = 5) + s(pressure, k = 5) + s(rain, k = 4) +

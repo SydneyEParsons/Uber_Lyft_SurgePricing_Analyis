@@ -221,23 +221,67 @@ summary(glmm_surge)
 ```
 
 
-## Model Comparison
+## Model Comparison: GLM vs GLMM Robustness Check
+
+We cannot directly compare GLM and GLMM using AIC or a standard likelihood
+ratio test, because the two models use different likelihood formulations:
+the GLM maximizes a conditional likelihood while the GLMM integrates over
+random effects using a Laplace approximation. As noted in the course
+materials (Week 3, GLMM Theory), standard AIC is only appropriate for
+comparing GLMM variants when we are interested in accounting for
+correlation structures; when evaluating whether random effects are
+necessary, AIC must be modified to conditional AIC (cAIC), which is beyond
+the scope of this analysis.
+
+Instead, we assess whether the GLMM's random effects add meaningful
+information by examining: 
+(1) the estimated random effect variances
+(2) the consistency of fixed effect estimates between the two models
+(3) the practical context of our grouping variables
 
 ```{r surge-compare}
 # 1. Check random effect variance estimates
-cat("Random Effect Variance Estimates:\n")
-print(VarCorr(glmm_surge))
-cat("\nIf variances are near zero, fixed effects already capture location variation.\n\n")
+cat("=== Random Effect Variance Estimates ===\n")
+vc <- VarCorr(glmm_surge)
+print(vc)
+cat("\nInterpretation: If variances are near zero, fixed effects already\n")
+cat("capture the location-level variation adequately.\n\n")
 
-# 2. Likelihood ratio test: GLM (no random effects) vs GLMM (random intercepts)
-cat("Likelihood Ratio Test:\n")
-lrt_stat <- -2 * (logLik(glm_surge) - logLik(glmm_surge))
-lrt_df   <- 2  # two random effect variance parameters (source + destination)
-lrt_p    <- pchisq(as.numeric(lrt_stat), df = lrt_df, lower.tail = FALSE)
-cat("  Chi-sq statistic:", round(as.numeric(lrt_stat), 2), "\n")
-cat("  df:", lrt_df, "\n")
-cat("  p-value:", format.pval(lrt_p, digits = 4), "\n")
-cat("  (Note: p-value is conservative due to boundary testing)\n")
+# 2. Compare fixed effect estimates between GLM and GLMM
+cat("=== Fixed Effect Comparison (Weather & Time) ===\n")
+glm_coefs  <- coef(glm_surge)
+glmm_coefs <- fixef(glmm_surge)
+
+# Identify common coefficients (weather + time variables)
+common_vars <- intersect(names(glm_coefs), names(glmm_coefs))
+weather_time_pattern <- c("temp", "wind", "humidity", "clouds", "pressure",
+                          "rain", "time_period", "day_of_week")
+keep <- sapply(common_vars, function(x)
+  any(sapply(weather_time_pattern, function(p) startsWith(x, p))))
+compare_vars <- common_vars[keep]
+
+comparison_df <- data.frame(
+  Variable   = compare_vars,
+  GLM_coef   = round(glm_coefs[compare_vars], 5),
+  GLMM_coef  = round(glmm_coefs[compare_vars], 5),
+  Difference = round(glm_coefs[compare_vars] - glmm_coefs[compare_vars], 5)
+)
+print(comparison_df, row.names = FALSE)
+
+cat("\nIf fixed effect estimates are nearly identical between GLM and GLMM,\n")
+cat("this confirms that the random intercepts do not meaningfully change\n")
+cat("the substantive conclusions.\n\n")
+
+# 3. Contextual argument
+cat("=== Contextual Justification ===\n")
+cat("Number of source locations:", length(unique(lyft_df$source)), "\n")
+cat("Number of destination locations:", length(unique(lyft_df$destination)), "\n")
+cat("Average rides per source:", round(nrow(lyft_df) / length(unique(lyft_df$source))), "\n")
+cat("Average rides per destination:", round(nrow(lyft_df) / length(unique(lyft_df$destination))), "\n")
+cat("\nWith only 12 unique locations per grouping variable and thousands of\n")
+cat("observations per group, fixed effects can fully capture location-level\n")
+cat("variation. Random effects are most beneficial when there are many groups\n")
+cat("with few observations each (Bolker et al., 2009; Gelman & Hill, 2007).\n")
 ```
 
 
