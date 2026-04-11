@@ -1,8 +1,13 @@
 ---
-title: "New Analysis"
+title: "cab_type_pricing"
 output: html_document
 date: "2026-03-07"
 ---
+# The Effects of Rush Hour, Holiday and Day of the Week on Ride Prices
+
+# Research Question Three
+
+**RQ3:** What is the impact of holiday, rush hour, day of week, and cab type  on the prices for Uber and Lyft rides during the specified time period?
 
 ```{r}
 library(lubridate)
@@ -66,6 +71,7 @@ day_of_week <- merged_data %>%
   )
 print(day_of_week, n = Inf)
 ```
+# Exploratory Data Analysis
 
 ```{r}
 ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
@@ -363,9 +369,6 @@ labs(title = "Analyze Hourly Price on Normal Days of the Week
 ", x="Hour", y="Mean Price") 
 ```
 
-```{r}
-#Looking at the plots above time has little to no impact on the prices. The cab type is what has the most influence on the price of Uber and Lyft rides.
-```
 
 ```{r}
 #How big a difference is there in the days over the full time period
@@ -395,29 +398,7 @@ merged_data %>%
 #The numbers are all very similar. Did the creator of the dataset do this on purpose or is this the true distribution of rides chosen.
 ```
 
-```{r}
-#Modelling GLM
-glm_model_price <- glm(price ~ holiday + day_of_week + hour + cab_combo + surge_multiplier,
-                      data = merged_data,
-                      family = Gamma(link = "log"))
-summary(glm_model_price)
-appraise(glm_model_price)
-PseudoR2(glm_model_price, which = NULL)
-```
-
-```{r}
-#Validating GLM
-set.seed(42)
-train_control <- trainControl(method = "cv", number = 10)
-
-glm_kfold <- train(price ~ holiday + day_of_week + hour + cab_combo + surge_multiplier,
-                      data = merged_data,
-                      method="glm",
-                      family = Gamma(link = "log"),
-                      trControl = train_control)
-print(glm_kfold)
-```
-
+#Modelling The Data With a GAM
 
 ```{r}
 #Modelling GAM
@@ -431,3 +412,28 @@ draw(gam_model_price)
 
 ```
 
+# Modelling the Data With a GLM
+
+```{r}
+#Modelling GLM
+glm_model_price <- glm(price ~ holiday + day_of_week + hour + cab_combo + surge_multiplier,
+                      data = merged_data,
+                      family = Gamma(link = "log"))
+summary(glm_model_price)
+appraise(glm_model_price)
+PseudoR2(glm_model_price, which = NULL)
+```
+# Validating the GLM
+
+```{r}
+#Validating GLM
+set.seed(42)
+train_control <- trainControl(method = "cv", number = 10)
+
+glm_kfold <- train(price ~ holiday + day_of_week + hour + cab_combo + surge_multiplier,
+                      data = merged_data,
+                      method="glm",
+                      family = Gamma(link = "log"),
+                      trControl = train_control)
+print(glm_kfold)
+```
