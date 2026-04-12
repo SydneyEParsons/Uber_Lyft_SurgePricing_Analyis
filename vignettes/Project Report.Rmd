@@ -3,11 +3,19 @@ title: "Project Report"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Project Report}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
-*Note:* Before running the code please generate the merged_data_cleaned.csv. To do this ensure you have saved the raw data files from the repository and then run Cleaning And Merging The Data.R to generate the merged_data_cleaned.csv. Due to file size limitations we were unable to upload the compiled merged_data_cleaned.csv file directly.
 
+*Note:* Before running the code please generate the
+merged_data_cleaned.csv. To do this ensure you have saved the raw data
+files from the repository and then run Cleaning And Merging The Data.R
+to generate the merged_data_cleaned.csv. Due to file size limitations we
+were unable to upload the compiled merged_data_cleaned.csv file
+directly.
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -30,112 +38,145 @@ library(DescTools)
 merged_data <- read.csv("../merged_data_cleaned.csv")
 ```
 
-Front Matter:
-Uber and Lyft Surge Pricing Analysis
-By Lingyun Jiang (B00850695) and Sydney Parsons (B01068132)
-Data Analysis STAT 4620/5620 Winter 25-26
-Link to GitHub: https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis
+**Front Matter** 
 
-Abstract (150 words):
-This is an analysis of Uber and Lyft Pricing in Boston Massachusetts in November to December of 2018 (Munde, 2019). In it we cover three main research questions with the goal of determining the overall impacts on pricing for Uber and Lyft. 
+Uber and Lyft Surge Pricing Analysis 
+By Lingyun Jiang (B00850695) and Sydney Parsons (B01068132) 
+Data Analysis STAT 4620/5620 Winter 25-26 
+Link to GitHub:
+<https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis>
 
+## Abstract (150 words)
 
-Keywords (Max 10):
-- Uber
-- Lyft
-- Pricing
-- Surge
-- Holiday
-- Rushhour
-- DOW
-- Weather
-- Distance
+This is an analysis of Uber and Lyft Pricing in Boston Massachusetts in
+November to December of 2018 (Munde, 2019). In it we cover three main
+research questions with the goal of determining the overall impacts on
+pricing for Uber and Lyft.
+
+##Keywords 
+
+Uber, Lyft, Pricing, Surge, Holiday, Rushhour, DOW, Weather, Distance
 
 
-Introduction: 
-Research questions and background information.
+##Introduction Research questions and background information.
+
+**Research Question 1:**
+
+**Research Question 2:**
+
+**Research Question 3:**
 
 
-Data Description:
-- Data points description here**
 
-Research Question #1 *Insert visualization for EDA for the three questions*
+## Data Description:
+
+-   Data points description here\*\*
+
+
+**Variables:**
+
+
+
+### EDA: Research Question 1
+
+**Figure 1:**
+
 ```{r}
 
 ```
 
-Research Question #2 *Insert visualization for EDA for the three questions*
+**Figure 2:**
+
 ```{r}
 
 ```
 
-Research Question #3 *Insert visualization for EDA for the three questions*
+**Figure 3:**
+
 ```{r}
 
 ```
 
+### EDA: Research Question 2
 
+**Figure \#**
 
-Methods:
-Research Question #1: *Discuss methods chosen and why*
-
-
-Research Question #2: *Discuss methods chosen and why*
-
-
-Research Question #3: *Discuss methods chosen and why*
-
-
-
-
-Analysis:
-Research Question #1 (*Insert code and validation into the vignette*)
 ```{r}
 
 ```
 
-Research Question #2 (*Insert code and validation into the vignette*)
+### EDA: Research Question 3
+
 ```{r}
 
 ```
 
-Research Question #3 (*Insert code and validation into the vignette*)
+## Methods
+
+**Research Question 1:** 
+*Discuss methods chosen and why*
+
+**Research Question 2:** 
+*Discuss methods chosen and why*
+
+**Research Question 3:** 
+*Discuss methods chosen and why*
+
+
+## Analysis
+
+### Research Question #1 
+(*Insert code and validation into the vignette*)
+
 ```{r}
 
 ```
 
+### Research Question #2 
+(*Insert code and validation into the vignette*)
 
-
-Results:
-Research Question #1 *Discuss the analysis and the results why or why not it worked*
-
-
-Research Question #1 (*Insert code and validation for the analysis into the vignette*)
 ```{r}
 
 ```
 
-Research Question #2 *Discuss the analysis and the results why or why not it worked*
+### Research Question #3 
+(*Insert code and validation into the vignette*)
 
-
-Research Question #2 (*Insert code and validation for the analysis into the vignette*)
 ```{r}
 
 ```
 
-Research Question #3*Discuss the analysis and the results why or why not it worked*
+## Results
 
+**Research Question 1:**Discuss the analysis and the results why or why
+not it worked\*
 
-Research Question #3 (*Insert code and validation for the analysis into the vignette*)
+(*Insert code and validation for the analysis into the vignette*)
+
 ```{r}
 
 ```
 
+**Research Question 2:**Discuss the analysis and the results why or why
+not it worked\*
 
+(*Insert code and validation for the analysis into the vignette*)
 
-Conclusion:
+```{r}
 
+```
 
+**Research Question 3:**Discuss the analysis and the results why or why
+not it worked\*
 
-References:
+(*Insert code and validation for the analysis into the vignette*)
 
+```{r}
+
+```
+
+## Conclusion:
+
+## Limitations:
+
+## References
