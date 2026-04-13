@@ -34,7 +34,7 @@ library(caret)
 library(DescTools)
 library(scales)
 library(tidyr)
-
+library(lme4)
 ```
 
 **Front Matter** 
@@ -790,7 +790,8 @@ gam_model <- bam(
   data    = merged_df,
   family  = Gamma(link = "log"),
   method  = "fREML",
-  discrete = TRUE
+  discrete = TRUE,
+  select   = TRUE
 )
  
 summary(gam_model)
@@ -800,7 +801,6 @@ summary(gam_model)
 par(mfrow = c(3, 2), mar = c(4, 4, 2, 1))
 plot(gam_model, shade = TRUE, shade.col = "lightblue",
      residuals = FALSE, rug = TRUE, se = TRUE)
-par(mfrow = c(1, 1))
 ```
 
 ```{r}
@@ -978,17 +978,17 @@ print(glm_kfold)
 
 **Research Question 1:**
 
-The GAM explained approximately 92 percent of the deviance in ride prices, with an adjusted R squared of approximately 0.90. The dominant predictors were distance, cab type, and service name rather than weather conditions.
+The GAM explained approximately 92 percent of the deviance in ride prices, with an adjusted R squared of approximately 0.90. The dominant predictors were distance, cab type, and service name rather than weather conditions. The model was fit with the select equals TRUE option in bam, which adds an extra shrinkage penalty to each smooth term. This penalty allows the model to effectively remove smooths that do not contribute meaningfully, providing automatic variable selection on the weather terms rather than relying on manual inspection of p values.
  
 **Figure 21: Estimated Smooth Effects of Weather Variables on Log(Price):**
  
-Figure # displays the estimated smooth effects for each of the six weather variables on the log price scale, with shaded areas representing 95 percent confidence intervals and rug marks showing the distribution of observed values. Among the weather smooth terms, only cloud cover reached statistical significance with a p value of 0.002. Temperature showed a non-linear pattern but did not reach significance at the 0.05 level with a p value of 0.11. Atmospheric pressure was close to significance with a p value of 0.09 but did not cross the threshold. Wind, humidity, and rain showed no significant effects after controlling for the structural covariates, with their confidence intervals overlapping zero throughout. The practical magnitude of even the significant cloud cover effect was small. The smooth curves for all weather variables varied by less than 0.05 on the log price scale, translating to price differences of roughly 5 percent or less across the observed range of each variable.
+Figure 21 displays the estimated smooth effects for each of the six weather variables on the log price scale, with shaded areas representing 95 percent confidence intervals and rug marks showing the distribution of observed values. Among the weather smooth terms, cloud cover reached high statistical significance with a p value of 0.0009 and an effective degrees of freedom of approximately 1.89, indicating a modest non-linear relationship with price. Atmospheric pressure was also statistically significant with a p value of 0.017 and an effective degrees of freedom of approximately 1.59. The remaining four weather variables were effectively shrunk to zero by the selection penalty. Temperature had an effective degrees of freedom of 0.05 with a p value of 0.42, while wind, humidity, and rain all had effective degrees of freedom below 0.1 and non-significant p values. This confirms that only cloud cover and pressure contribute to the model, while the other weather variables have no detectable influence on price after controlling for structural covariates. The practical magnitude of even the two significant effects was small. The smooth curves varied by less than 0.05 on the log price scale, translating to price differences of roughly 5 percent or less across the observed range of each variable.
  
 **Figure 22: GAM Diagnostic Plots:**
  
-Figure # presents the standard GAM diagnostic checks. The QQ plot of deviance residuals in the top left panel was approximately linear, indicating that the Gamma distribution assumption was reasonable. The residuals versus linear predictor plot in the top right panel showed no strong systematic patterns, suggesting that the model adequately captured the relationship between covariates and price. The histogram of residuals in the bottom left panel confirmed an approximately symmetric distribution centred near zero. The response versus fitted plot in the bottom right panel demonstrated that the model captured the general price structure well, with points clustering around the diagonal. Overall, the Gamma family handled the skewed distribution appropriately and the diagnostics did not reveal major model misspecification.
+Figure 22 presents the standard GAM diagnostic checks. The QQ plot of deviance residuals in the top left panel was approximately linear, indicating that the Gamma distribution assumption was reasonable. The residuals versus linear predictor plot in the top right panel showed no strong systematic patterns, suggesting that the model adequately captured the relationship between covariates and price. The histogram of residuals in the bottom left panel confirmed an approximately symmetric distribution centred near zero. The response versus fitted plot in the bottom right panel demonstrated that the model captured the general price structure well, with points clustering around the diagonal. Overall, the Gamma family handled the skewed distribution appropriately and the diagnostics did not reveal major model misspecification.
  
-In summary, only cloud cover showed a statistically significant effect on ride prices among the six weather variables, but even this effect was practically negligible compared to structural factors such as distance, service type, and route. This suggests that during the observed period, the pricing algorithms of both Uber and Lyft were not meaningfully influenced by weather conditions.
+In summary, only cloud cover and atmospheric pressure showed statistically significant effects on ride prices among the six weather variables, and the select equals TRUE option in bam confirmed that the other four variables could be effectively removed from the model. Even the two significant effects were practically negligible compared to structural factors such as distance, service type, and route. This suggests that during the observed period, the pricing algorithms of both Uber and Lyft were not meaningfully influenced by weather conditions.
 
 **Research Question 2:**
 
@@ -1035,13 +1035,15 @@ We used both models to analyse the data prior to deciding on a singular model, b
 ## Conclusion:
 Our analysis of the Uber and Lyft pricing dataset by Munde led us to draw new conclusions and confirmed parts of our initial hypotheses. 
 
-Research Question #1 
-For our first research question we found that weather conditions have a statistically detectable but practically negligible effect on ride prices. After controlling for distance, cab type, and route, the GAM showed that only cloud cover had a statistically significant effect on price (p equals 0.002), but its practical magnitude was negligible. Temperature showed a non-linear pattern but did not reach statistical significance (p equals 0.11). The remaining weather variables, including wind, humidity, pressure, and rain, were also not significant. Other weather variables, including wind, humidity, and rain, showed no significant effects. This is the opposite of what we predicted in our hypothesis, which was that adverse weather would lead to meaningful price increases. The data suggest that during this observation period, weather did not play a substantial role in the pricing algorithms of either platform.
+**Research Question 1:**
 
-Research Question #2 
+For our first research question we found that weather conditions have almost no practical effect on ride prices. After controlling for distance, cab type, and route, the GAM with the select equals TRUE shrinkage penalty identified only two weather variables as contributing to the model. Cloud cover was highly significant with a p value of 0.0009 and pressure was significant with a p value of 0.017. The remaining four variables, temperature, wind, humidity, and rain, were effectively shrunk to zero by the penalty, with effective degrees of freedom near zero and non-significant p values. Even for cloud cover and pressure, the practical magnitude was minimal, with the smooth curves varying by less than 0.05 on the log price scale. This is the opposite of what we predicted in our hypothesis, which was that adverse weather would lead to meaningful price increases. The data suggest that during this observation period, weather did not play a substantial role in the pricing algorithms of either platform.
+
+**Research Question 2:**
+
 Our findings for our second research question indicated that surge pricing is predominantly driven by pickup location, with time of day playing a secondary role. Weather conditions showed no meaningful association with surge occurrence. We initially hypothesized that surge would be primarily influenced by weather and rush hour patterns rather than by location alone, but the data clearly indicated otherwise. The GLMM robustness check confirmed these findings. Although the source random effect captured non-trivial between location variance, all weather and time coefficients remained virtually identical across the GLM and GLMM. This stability demonstrates that our conclusions are robust to the choice of how location is modelled. With only 12 locations and over 21,000 observations per group, fixed effects provide reliable estimates without requiring random effects. 
 
-Research Question #3
+**Research Question 3:**
 Our third and final analysis led us to the conclusion that cab combo and surge multiplier are the primary influences on ride pricing for both Uber and Lyft. Surge multiplier was analysed more deeply in our second research question but in question three we did determine its strong significance. This does align with part of our initial hypothesis where we hypothesized cab combo would be the primary influence on price. However, in our hypothesis we had also predicted that rush hour, holiday and day of the week would be significant influences on price but that was not what our findings returned. The GLM was successful in representing the analysis of our dataset as can be confirmed by our EDA and our model validation through k-fold cross validation which yielded an r-squared value of 81.75%.
 
 ## Limitations:
@@ -1136,8 +1138,4 @@ Wikipedia contributors. (2025). Cloud cover. Wikipedia. https://en.wikipedia.org
 AI tools such as Claude AI, ChatGPT and Grammarly were used. For the report, it was used to assist and enhance the writing. For the code it was used to assist and debug the code. The content in this project and the conclusions drawn from the data are our own.
 
 
-
-
-
-‌
 
