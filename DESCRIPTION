@@ -1,17 +1,21 @@
 Package: UberLyftAnalysis
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Analysis of Uber and Lyft Pricing
 Version: 0.1.0
 Authors@R: c(
     person(
-      "Jane", "Doe",
-      email = "jane@example.com",
+      "Lingyun Jiang",
+      email = "ln386375@dal.ca",
+      role = c("aut", "cre")
+    ),
+    person(
+      "Sydney Parsons",
+      email = "sydney@dal.ca",
       role = c("aut", "cre")
     )
   )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
-License: What license is it under?
+Description: This package was created to analyse the Uber and Lyft pricing data by Ravi Munde available on Kaggle (Munde, 2019).
+License: Public Domain - CCO 1.0 Universal.
 Encoding: UTF-8
 LazyData: true
 Suggests: 
