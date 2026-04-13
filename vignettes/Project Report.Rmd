@@ -399,6 +399,16 @@ ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
 These line graphs show the mean pricing for the different cab combos during the days of the week. The lines overall remain very stable but there is greater variation with pricing in the higher price hailing tiers, specifically in Lyft-Lux Black, Lyft-Lux Black XL, Uber-Black, and Uber-Black SUV. These variances are not significant but it is clear there is more noise in these combos than the others.
 
 ```{r}
+#Analyze hourly price on normal days of the week
+normal_rush_dayofweek_summary <- merged_data %>%
+    filter(holiday=="None") %>%
+    group_by(hour, day_of_week, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+
 ggplot(data=normal_rush_dayofweek_summary %>% filter(cab_type == "Lyft"), mapping =aes(x=hour, y=mean_price, color=day_of_week)) +
 geom_line() +
 facet_wrap(~ cab_combo) +
@@ -416,6 +426,16 @@ labs(title = "Analyze Hourly Price on Normal Days of the Week
 Here we are focusing on the influence of the days of the week on the pricing of ride hailing platforms Uber and Lyft. Our following EDA plots is a colour coded bar plot and heat maps. These plots help illustrate the relationship between the days of the week and our cab combo. As apparent through the plots the pricing remains very consistent across each day of the week and cab types. 
 
 ```{r}
+#Compare day of week, price and cab_combo
+day_of_week <- merged_data %>%
+  group_by(day_of_week, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+print(day_of_week, n = Inf)
+
 ggplot(data=day_of_week, mapping =aes(x=day_of_week, y=mean_price, fill=cab_combo)) +
 geom_bar(
   stat = "identity",
@@ -464,6 +484,16 @@ ggplot(merged_data, aes(x = day_of_week, y = price, fill = day_of_week)) +
 With little variation in the days of the week we analysed the data further. By plotting the week day against the weekend we aimed to try to identify price variations on a more general basis but this plot also did not show any notable variation in pricing from weekday to weekend.
 
 ```{r}
+#Compare weekday and weekends to price and cab_combo
+weekend_summary <- merged_data %>%
+  group_by(is_weekend, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+print(weekend_summary)
+
 ggplot(data=weekend_summary, mapping =aes(x=factor(is_weekend, labels=c("Weekday", "Weekend")), y=mean_price, fill=cab_combo)) +
 geom_bar(
   stat = "identity",
@@ -475,9 +505,19 @@ labs(title = "Compare weekday and weekends to price and cab_combo", x="Is Weeken
 ```
 
 **Figure 6: Price Distribution By Holiday:**
-For price distribution by holiday, we presumed traffic would be higher on these days due to people travelling for the holiday and having time off. However, as seen in the violin plots that was not the case. Usage of Uber and Lyft on these holidays as can be seen from the increased density in the different sections of the violin plot and with less defined sections of the violin plot. This may indicate that the pricing was changing slightly between cab-type segments on Lyft rides. However, Uber does remain very constant in its pricing regardless of holiday. 
+For price distribution by holiday, we presumed traffic would be higher on these days due to people travelling for the holiday and having time off. However, as seen in the violin plots and the bar plots below that was not the case. This may indicate that the pricing was changing slightly between cab-type segments on Lyft rides. However, Uber does remain very constant in its pricing regardless of holiday. The bar graph also shows the Lyft ride prices being more incremental than Uber ride pricing which remains very stable. 
 
 ```{r}
+#Comparing weekend and weekday pricing to holiday pricing
+holiday_summary_detailed <- merged_data %>%
+  group_by(holiday, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+print(holiday_summary_detailed)
+
 ggplot(merged_data, aes(x = holiday, y = price, fill = holiday)) +
   geom_violin(trim = FALSE) +  
   geom_boxplot(width = 0.1, outlier.shape = NA) +  
@@ -487,12 +527,7 @@ ggplot(merged_data, aes(x = holiday, y = price, fill = holiday)) +
        x = "Holiday", y = "Price") +
   theme_minimal() +
   theme(legend.position = "none") 
-```
 
-**Figure 7: Comparing Cost of Rides on Holidays:**
-To further visualise the pricing of Uber and Lyft on holidays we plotted them on line graphs. This provides an additional visualization outside of the violin plots. It is clear from these plots that the prices remain stable with small peaks later in the days presumably around the evening rush hour period.
-
-```{r}
 ggplot(data=holiday_summary_detailed, mapping =aes(x=factor(holiday, labels=c("Cyber Monday", "Hanukkah", "None")), y=mean_price, fill=cab_combo)) +
 geom_bar(
   stat = "identity",
@@ -503,10 +538,45 @@ labs(title = "Comparing Holiday Pricing to Cab Combo", x="Holiday", y="Mean Pric
   coord_flip() 
 ```
 
+**Figure 7: Comparing Cost of Rides on Holidays:**
+To further visualise the pricing of Uber and Lyft on holidays we plotted them on line graphs. This provides an additional visualization outside of the violin plots. It is clear from these plots that the prices remain stable with small peaks later in the days presumably around the evening rush hour period.
+
+```{r}
+#Compare time of day price on normal days to time of day on holiday
+normal_time_holiday_time_summary <- merged_data %>%
+    filter(is_weekend==0) %>%
+    group_by(hour, holiday, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+
+ggplot(data=normal_time_holiday_time_summary %>% filter(cab_type == "Lyft"), mapping =aes(x=hour, y=mean_price, color=holiday)) +
+geom_line() +
+facet_wrap(~ cab_combo) +
+labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price") 
+
+ggplot(data=normal_time_holiday_time_summary %>% filter(cab_type == "Uber"), mapping =aes(x=hour, y=mean_price, color=holiday)) +
+geom_line() +
+facet_wrap(~ cab_combo) +
+labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price")
+```
+
 **Figure 8: Comparing Rush Hour Price for Weekdays to Price on Normal Weekends:**
 In this EDA section we plotted the comparison of rush hour to weekdays and weekends on a bar plot categorized by cab-type. This plot demonstrates that the prices for rides remain steady across normal hours, morning rush and evening rush on both evenings and weekends. There are many bars on this plot and they are smaller but the numbers on the bars further confirm the limited change in pricing across the varying rush hours on weekdays and weekends.
 
 ```{r}
+#Comparing rush hour price for weekdays to price on weekends
+rush_weekdays_normal_weekends_summary <- merged_data %>%
+  group_by(rush_hour, is_weekend, cab_combo, cab_type) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+print(rush_weekdays_normal_weekends_summary)
+
 ggplot(data=rush_weekdays_normal_weekends_summary, mapping =aes(x=rush_hour, y=mean_price, fill=cab_combo)) +
 geom_bar(
   stat = "identity",
@@ -558,6 +628,17 @@ ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
 Surge multiplier was highlighted in our earlier research questions but we did also briefly plot it here to test its influence in our third research question. Uber remains constant because there was no observed surge price in this collected dataset. You can see the surge prices for Uber and Lyft here but a bar plot was not the most ideal for comparing surge across cab combo and holiday which is why we pivoted to a heatmap as can be seen in the following plot.
 
 ```{r}
+#Compare cab_combo, holiday and surge multiplier
+holiday_surge_summary <- merged_data %>%
+  group_by(holiday, cab_type, cab_combo) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE),
+    mean_surge = mean(surge_multiplier, na.rm = TRUE),
+    median_surge = median(surge_multiplier, na.rm = TRUE)
+  )
+
 ggplot(data=holiday_surge_summary, mapping =aes(x=cab_combo, y=mean_surge, fill=holiday)) +
 geom_bar(
   stat = "identity",
@@ -597,6 +678,16 @@ For our comparison of weekday holidays to rush hour we initially plotted a bar g
 After completing our exploratory analyses we proceeded to create the models for each of our research questions. The information provided from our analysis helped us choose methods in an informed manner.
 
 ```{r}
+#Compare pricing on weekday holidays to rush hour pricing
+weekday_holiday_rush_summary <- merged_data %>%
+    filter(is_weekend==0) %>%
+    group_by(rush_hour, holiday, cab_type) %>%
+  summarise(
+    n = n(),
+    mean_price = mean(price, na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  )
+
 ggplot(data=weekday_holiday_rush_summary, mapping =aes(x=rush_hour, y=mean_price, fill=holiday)) +
 geom_bar(
   stat = "identity",

@@ -244,7 +244,6 @@ ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
 
 ```{r}
 #Compare cab_combo, holiday and surge multiplier
-#Show how we only have 24 slots that are on a holiday
 holiday_surge_summary <- merged_data %>%
   group_by(holiday, cab_type, cab_combo) %>%
   summarise(
