@@ -37,13 +37,58 @@ library(tidyr)
 
 # Load merged data
 merged_data <- read.csv("../merged_data_cleaned.csv")
-
+merged_df <-merged_data
 ##Research Question #1
 
+# Replace rain NA with 0 (NA indicates no rain was recorded)
+merged_df$rain[is.na(merged_df$rain)] <- 0
+
+# Remove rows with missing price
+merged_df <- merged_df %>% filter(!is.na(price))
+
+# Create useful derived variables
+# Data was collected in Boston (EST = UTC-5 in Nov-Dec 2018)
+merged_df <- merged_df %>%
+  mutate(
+    time_stamp  = as.POSIXct(time_stamp, tz = "UTC"),
+    hour_ts     = as.POSIXct(hour_ts, tz = "UTC"),
+    time_local  = with_tz(time_stamp, tzone = "America/New_York"),
+    hour_of_day = hour(time_local),
+    day_of_week = lubridate::wday(time_local, label = TRUE),
+    cab_label   = paste(cab_type, name, sep = "-"),
+    route       = paste(source, "->", destination),
+    surge_binary = ifelse(surge_multiplier > 1, 1, 0)
+  )
+
+cat("Dataset dimensions:", nrow(merged_df), "rows x", ncol(merged_df), "columns\n")
+cat("Date range:", as.character(min(merged_df$time_stamp)),
+    "to", as.character(max(merged_df$time_stamp)), "\n")
 
 
 ##Research Question #2
+# Handle missing values
+merged_df$rain[is.na(merged_df$rain)] <- 0
+merged_df <- merged_df %>% filter(!is.na(price))
 
+# Create derived variables
+# Convert to Boston local time (EST = UTC-5 in Nov-Dec 2018) before extracting hour/day
+merged_df <- merged_df %>%
+  mutate(
+    time_stamp   = as.POSIXct(time_stamp, tz = "UTC"),
+    time_local   = with_tz(time_stamp, tzone = "America/New_York"),
+    hour_of_day  = hour(time_local),
+    # Bin hours into meaningful time periods to capture non-linear hourly patterns
+    time_period  = factor(case_when(
+      hour_of_day >= 6  & hour_of_day < 10 ~ "morning_rush",
+      hour_of_day >= 10 & hour_of_day < 16 ~ "midday",
+      hour_of_day >= 16 & hour_of_day < 20 ~ "evening_rush",
+      TRUE                                  ~ "night"
+    ), levels = c("midday", "morning_rush", "evening_rush", "night")),
+    # Use unordered factor so R applies treatment (dummy) coding, not polynomial contrasts
+    day_of_week  = factor(lubridate::wday(time_local, label = TRUE), ordered = FALSE),
+    route        = paste(source, "->", destination),
+    surge_binary = ifelse(surge_multiplier > 1, 1, 0)
+  )
 
 
 ##Research Question #3
@@ -122,31 +167,218 @@ Uber, Lyft, Pricing, Surge, Holiday, Rushhour, DOW, Weather, Distance
 
 ### EDA: Research Question 1
 
-**Figure 1:**
+**Figure 1: Distribution of Ride Prices**
 
 ```{r}
-
+ggplot(merged_df, aes(x = price)) +
+  geom_histogram(bins = 60, fill = "steelblue", color = "white", alpha = 0.8) +
+  labs(title = "Distribution of Ride Prices",
+       x = "Price (USD)", y = "Count") +
+  theme_minimal()
 ```
 
-**Figure 2:**
+For our first research question we began by examining the distribution of ride prices. As shown in Figure 1, the histogram revealed a strong right skew with the majority of rides concentrated at lower prices and a long tail extending toward more expensive service tiers. This pattern suggested that a model assuming normally distributed errors would not be appropriate and that the Gamma distribution would better capture the shape of the response variable.
+
+**Figure 2: Temperature vs. Price (Log Scale) by Platform:**
 
 ```{r}
+set.seed(42)
+sample_df <- merged_df %>% slice_sample(n = 20000)
 
+ggplot(merged_df, aes(x = temp, y = price)) +
+  geom_point(alpha = 0.02, size = 0.3, color = "grey40") +
+  geom_smooth(data = sample_df, method = "gam", formula = y ~ s(x),
+              se = TRUE, color = "steelblue", linewidth = 1) +
+  scale_y_log10() +
+  facet_wrap(~ cab_type) +
+  labs(title = "Temperature vs. Price (Log Scale) by Platform",
+       x = "Temperature (F)", y = "Price (USD, log scale)") +
+  theme_minimal()
 ```
 
-**Figure 3:**
+We then plotted temperature against price on a log scale with a GAM smoother overlaid on a random subsample. As shown in Figure 2, the smoother revealed a slight non-linear trend, but the effect was visually minor compared to the spread of the data. This indicated that while a non-linear relationship may exist, its practical magnitude is small relative to other sources of price variation.
+
+**Figure 3: Correlation Between Weather and Price by Service Type:**
 
 ```{r}
+cor_results <- merged_df %>%
+  group_by(cab_label) %>%
+  summarise(
+    Temperature = cor(price, temp,     use = "complete.obs"),
+    Clouds      = cor(price, clouds,   use = "complete.obs"),
+    Pressure    = cor(price, pressure, use = "complete.obs"),
+    Humidity    = cor(price, humidity,  use = "complete.obs"),
+    Wind        = cor(price, wind,     use = "complete.obs"),
+    Rain        = cor(price, rain,     use = "complete.obs"),
+    .groups = "drop"
+  )
 
+cor_long <- cor_results %>%
+  pivot_longer(-cab_label, names_to = "Weather Variable", values_to = "Correlation")
+
+ggplot(cor_long, aes(x = `Weather Variable`, y = cab_label, fill = Correlation)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(Correlation, 3)), size = 2.8) +
+  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B", midpoint = 0) +
+  labs(title = "Correlation Between Weather and Price by Service Type",
+       subtitle = "Unadjusted Pearson correlations (not controlling for distance or route)",
+       x = NULL, y = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ```
+
+Figure 3 presents the unadjusted Pearson correlations between weather variables and price for each service type. The correlations were uniformly weak across all service types with most values falling between negative 0.05 and positive 0.05. Temperature showed the strongest individual correlation, but it remained small in absolute terms. These patterns indicated that weather variables are unlikely to be dominant price drivers, motivating our use of a model that can detect subtle and potentially non-linear effects.
 
 ### EDA: Research Question 2
+```{r}
+# Confirm Uber surge is always 1, only Lyft has variation
+merged_df %>%
+  group_by(cab_type) %>%
+  summarise(
+    n_rides      = n(),
+    unique_surge = n_distinct(surge_multiplier),
+    min_surge    = min(surge_multiplier),
+    max_surge    = max(surge_multiplier),
+    pct_surge    = round(mean(surge_multiplier > 1) * 100, 2),
+    .groups = "drop"
+  )
+```
 
-**Figure \#**
+For our second research question we focused on the Lyft subset of the data because Uber showed a constant surge multiplier of 1.0 throughout the entire dataset. Shared rides were excluded as they also showed no surge variation, which would cause estimation problems in a logistic regression.
 
 ```{r}
+# Focus on Lyft only, exclude Shared rides
+lyft_df <- merged_df %>%
+  filter(cab_type == "Lyft", name != "Shared")
 
+cat("Lyft rides (excl. Shared):", nrow(lyft_df), "\n")
+cat("Surge rate:", round(mean(lyft_df$surge_binary) * 100, 2), "%\n\n")
+cat("Surge multiplier distribution:\n")
+table(lyft_df$surge_multiplier)
 ```
+
+**Figure 1: Surge Rate by Pickup Location:**
+
+```{r}
+source_surge <- lyft_df %>%
+  group_by(source) %>%
+  summarise(
+    surge_rate = mean(surge_binary),
+    n_rides    = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(surge_rate))
+
+ggplot(source_surge, aes(x = reorder(source, surge_rate), y = surge_rate)) +
+  geom_bar(stat = "identity", fill = "steelblue", alpha = 0.8) +
+  geom_text(aes(label = percent(surge_rate, accuracy = 0.1)),
+            hjust = -0.1, size = 3.2) +
+  scale_y_continuous(labels = percent, expand = expansion(mult = c(0, 0.15))) +
+  coord_flip() +
+  labs(title = "Surge Rate by Pickup Location (Lyft)",
+       subtitle = "Percentage of rides with surge_multiplier > 1",
+       x = NULL, y = "Surge Rate") +
+  theme_minimal()
+```
+
+As shown in Figure 1, there was substantial variation in surge rates by pickup location with some locations showing surge rates above 30 percent while others remained below 10 percent. This suggested that geographic factors play a significant role in surge occurrence.
+
+**Figure 2: Surge Rate by Dropoff Location:**
+
+```{r}
+dest_surge <- lyft_df %>%
+  group_by(destination) %>%
+  summarise(
+    surge_rate = mean(surge_binary),
+    n_rides    = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(surge_rate))
+
+ggplot(dest_surge, aes(x = reorder(destination, surge_rate), y = surge_rate)) +
+  geom_bar(stat = "identity", fill = "steelblue", alpha = 0.8) +
+  geom_text(aes(label = percent(surge_rate, accuracy = 0.1)),
+            hjust = -0.1, size = 3.2) +
+  scale_y_continuous(labels = percent, expand = expansion(mult = c(0, 0.15))) +
+  coord_flip() +
+  labs(title = "Surge Rate by Dropoff Location (Lyft)",
+       subtitle = "Percentage of rides with surge_multiplier > 1",
+       x = NULL, y = "Surge Rate") +
+  theme_minimal()
+```
+
+Figure 2 presents a similar analysis for dropoff locations. The variation across destinations was also present though somewhat less pronounced than for pickup locations, indicating that where a ride begins may matter more than where it ends for surge pricing.
+
+**Figure 3: Hourly Surge Rate (Lyft):**
+
+```{r}
+hour_surge <- lyft_df %>%
+  group_by(hour_of_day) %>%
+  summarise(surge_rate = mean(surge_binary), n_rides = n(), .groups = "drop")
+
+ggplot(hour_surge, aes(x = hour_of_day, y = surge_rate)) +
+  geom_line(color = "steelblue", linewidth = 1) +
+  geom_point(color = "steelblue", size = 2) +
+  scale_y_continuous(labels = percent) +
+  scale_x_continuous(breaks = seq(0, 23, 2)) +
+  labs(title = "Hourly Surge Rate (Lyft)",
+       x = "Hour of Day", y = "Surge Rate") +
+  theme_minimal()
+```
+
+Figure 3 showed that surge rates peaked during morning and evening commute hours, though the magnitude of the difference was moderate. The highest surge rates were observed in the early morning hours while midday showed the lowest rates overall.
+
+**Figure 4: Weather Conditions: Surge vs. Non-Surge:**
+
+```{r}
+weather_vars <- c("temp", "wind", "humidity", "clouds", "pressure", "rain")
+
+# Standardize weather variables for comparable scale
+lyft_std <- lyft_df %>%
+  mutate(across(all_of(weather_vars), ~ (. - mean(., na.rm = TRUE)) / sd(., na.rm = TRUE))) %>%
+  mutate(Surge = ifelse(surge_binary == 1, "Surge", "No Surge")) %>%
+  select(Surge, all_of(weather_vars)) %>%
+  pivot_longer(-Surge, names_to = "Variable", values_to = "Value")
+
+lyft_means <- lyft_std %>%
+  group_by(Surge, Variable) %>%
+  summarise(mean_val = mean(Value, na.rm = TRUE), .groups = "drop")
+
+ggplot(lyft_means, aes(x = Variable, y = mean_val, fill = Surge)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.7),
+           width = 0.6, alpha = 0.8) +
+  scale_fill_manual(values = c("No Surge" = "grey60", "Surge" = "steelblue")) +
+  labs(title = "Weather Conditions: Surge vs. Non-Surge (Lyft)",
+       subtitle = "Standardized means (z-scores); small differences suggest weather is not the primary surge driver",
+       x = NULL, y = "Standardized Mean") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 20, hjust = 1))
+```
+
+Figure 4 compared standardized weather variable means between surge and non-surge rides. The differences were extremely small across all weather variables, providing early evidence that weather is not the primary trigger for surge pricing.
+
+**Figure 5: Surge Rate by Time Period and Day of Week:**
+
+```{r}
+time_day_surge <- lyft_df %>%
+  group_by(time_period, day_of_week) %>%
+  summarise(
+    surge_rate = mean(surge_binary),
+    n_rides    = n(),
+    .groups = "drop"
+  )
+
+ggplot(time_day_surge, aes(x = day_of_week, y = time_period, fill = surge_rate)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = percent(surge_rate, accuracy = 0.1)), size = 3.5) +
+  scale_fill_gradient(low = "white", high = "steelblue", labels = percent) +
+  labs(title = "Surge Rate by Time Period and Day of Week (Lyft)",
+       x = NULL, y = NULL, fill = "Surge Rate") +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
+```
+
+Figure 5 presents a heatmap of surge rates across time periods and days of the week. The heatmap confirmed that temporal patterns exist but are secondary to location effects. Certain combinations of time period and day showed slightly elevated surge rates, but no single temporal factor dominated the way that pickup location did.
 
 ### EDA: Research Question 3
 
@@ -388,10 +620,28 @@ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ## Methods
 
 **Research Question 1:** 
-*Discuss methods chosen and why*
+To assess the effect of weather on ride price we used a Generalized Additive Model with a Gamma family and log link function. This model was chosen based on three characteristics of the response variable.
+
+First, ride prices are strictly positive, which the Gamma distribution naturally accommodates. Second, the distribution of prices is right skewed with a concentration of rides at lower prices and a long tail of expensive rides from premium service tiers. The Gamma distribution handles this asymmetry well. Third, more expensive rides exhibit greater price variability, which is consistent with the Gamma assumption that variance is proportional to the squared mean.
+
+The log link ensures that predicted prices remain positive and that covariate effects act multiplicatively on the price scale. This is a natural interpretation for pricing data because a one unit change in temperature, for example, would scale the price by a constant percentage rather than adding a fixed dollar amount.
+
+We used smooth functions for the six weather variables to allow for potentially non-linear relationships, while distance, cab type, service name, source, and destination entered as parametric terms. The basis dimensions were set to reflect the expected complexity of each relationship. Temperature was assigned k equals 8 because it had the widest range and the most potential for complex non-linearity. Clouds and pressure were assigned k equals 5 for moderate flexibility. Wind, humidity, and rain were each assigned k equals 4 because the data showed limited variability in these variables or, in the case of rain, very sparse observations. The effective degrees of freedom reported in the model output indicate how much of this flexibility the data actually require.
+
+The model was fit using the bam function from the mgcv package (Wood, 2017), which is a computationally efficient version of gam designed for large datasets. We used fast REML for smoothing parameter estimation with the discrete option enabled to further accelerate computation.
+
+The key assumptions of this model are that conditional on covariates, prices follow a Gamma distribution with a constant shape parameter, and that the smooth terms can adequately approximate the true underlying relationships. We also assume that observations are conditionally independent given the covariates. We acknowledge that repeated sampling of the same routes over time may introduce correlation, which is discussed further in the Limitations section.
 
 **Research Question 2:** 
-*Discuss methods chosen and why*
+To model factors associated with surge pricing we used a logistic regression with a binomial family and logit link, treating surge occurrence as a binary outcome. A ride was classified as having surge if the surge multiplier exceeded 1.0 and as not having surge otherwise. This binary approach was chosen because the surge multiplier in the Lyft data takes only a few discrete values, with the vast majority of observations at 1.0 or 1.25. The extreme rarity of higher surge levels made a continuous or ordinal model impractical.
+
+The model includes weather variables consisting of temperature, wind, humidity, cloud cover, pressure, and rain, as well as temporal variables including time period and day of week, pickup location, dropoff location, and service type as fixed effects. The time period was categorised into four bins: morning rush from 6am to 10am, midday from 10am to 4pm, evening rush from 4pm to 8pm, and night from 8pm to 6am.
+
+As a robustness check we also fit a Generalized Linear Mixed Model with random intercepts for source and destination locations using the lme4 package (Bates et al., 2015). The purpose of this GLMM was to assess whether treating locations as random effects, which partially pools location level estimates and accounts for potential within location correlation, would change our conclusions about the weather and time predictors.
+
+It is important to note that we do not use AIC or likelihood ratio tests to compare the GLM and GLMM directly. These two models use different likelihood formulations. The GLM maximises a conditional likelihood while the GLMM with Laplace approximation uses an approximate marginal likelihood that integrates over random effects. As discussed in the course materials, standard AIC is only valid for comparing GLMM variants when the goal is to account for correlation structures. Comparing across model classes requires conditional AIC, which is beyond the scope of this analysis. Instead, we evaluate the necessity of random effects by examining the estimated random effect variances, the consistency of fixed effect estimates between models, and the practical context of our grouping structure.
+
+The assumptions of the logistic GLM include independent observations conditional on covariates and a linear relationship between covariates and the log odds of surge. The GLMM additionally assumes that random effects are normally distributed. Independence is approximate given the repeated measures nature of the data, but with large sample sizes per group this is unlikely to affect the direction of our conclusions.
 
 **Research Question 3:** 
 For research question three where we analysed different effects on cab prices we chose to use a GLM. Initially we had decided to compare a GLM and a GAM to see which one would perform best on the dataset. 
@@ -407,21 +657,165 @@ To evaluate the models we plotted the residuals of both the GAM and GLM to visua
 ## Analysis
 
 ### Research Question #1 
-(*Insert code and validation into the vignette*)
 
 ```{r}
+gam_model <- bam(
+  price ~ s(temp, k = 8) + s(wind, k = 4) + s(humidity, k = 4) +
+          s(clouds, k = 5) + s(pressure, k = 5) + s(rain, k = 4) +
+          distance + cab_type + name + source + destination,
+  data    = merged_df,
+  family  = Gamma(link = "log"),
+  method  = "fREML",
+  discrete = TRUE
+)
+ 
+summary(gam_model)
+```
 
+```{r}
+par(mfrow = c(3, 2), mar = c(4, 4, 2, 1))
+plot(gam_model, shade = TRUE, shade.col = "lightblue",
+     residuals = FALSE, rug = TRUE, se = TRUE)
+par(mfrow = c(1, 1))
+```
+
+```{r}
+par(mfrow = c(2, 2))
+gam.check(gam_model)
+par(mfrow = c(1, 1))
+```
+
+```{r}
+cat("Adjusted R-squared:", summary(gam_model)$r.sq, "\n")
+cat("Deviance explained:", round(summary(gam_model)$dev.expl * 100, 2), "%\n")
 ```
 
 ### Research Question #2 
-(*Insert code and validation into the vignette*)
 
 ```{r}
+glm_surge <- glm(
+  surge_binary ~ temp + wind + humidity + clouds + pressure + rain +
+                 time_period + day_of_week +
+                 source + destination + name,
+  data   = lyft_df,
+  family = binomial(link = "logit")
+)
+ 
+summary(glm_surge)
+```
 
+```{r}
+anova(glm_surge, test = "Chisq")
+```
+
+```{r}
+glmm_surge <- glmer(
+  surge_binary ~ temp + wind + humidity + clouds + pressure + rain +
+                 time_period + day_of_week + name +
+                 (1 | source) + (1 | destination),
+  data    = lyft_df,
+  family  = binomial(link = "logit"),
+  nAGQ    = 0,
+  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 50000))
+)
+ 
+summary(glmm_surge)
+```
+
+```{r}
+# 1. Check random effect variance estimates
+cat("=== Random Effect Variance Estimates ===\n")
+vc <- VarCorr(glmm_surge)
+print(vc)
+ 
+# 2. Compare fixed effect estimates between GLM and GLMM
+cat("\n=== Fixed Effect Comparison (Weather & Time) ===\n")
+glm_coefs  <- coef(glm_surge)
+glmm_coefs <- fixef(glmm_surge)
+ 
+common_vars <- intersect(names(glm_coefs), names(glmm_coefs))
+weather_time_pattern <- c("temp", "wind", "humidity", "clouds", "pressure",
+                          "rain", "time_period", "day_of_week")
+keep <- sapply(common_vars, function(x)
+  any(sapply(weather_time_pattern, function(p) startsWith(x, p))))
+compare_vars <- common_vars[keep]
+ 
+comparison_df <- data.frame(
+  Variable   = compare_vars,
+  GLM_coef   = round(glm_coefs[compare_vars], 5),
+  GLMM_coef  = round(glmm_coefs[compare_vars], 5),
+  Difference = round(glm_coefs[compare_vars] - glmm_coefs[compare_vars], 5)
+)
+print(comparison_df, row.names = FALSE)
+ 
+# 3. Contextual argument
+cat("\n=== Contextual Justification ===\n")
+cat("Number of source locations:", length(unique(lyft_df$source)), "\n")
+cat("Number of destination locations:", length(unique(lyft_df$destination)), "\n")
+cat("Average rides per source:", round(nrow(lyft_df) / length(unique(lyft_df$source))), "\n")
+cat("Average rides per destination:", round(nrow(lyft_df) / length(unique(lyft_df$destination))), "\n")
+```
+
+```{r}
+# McFadden pseudo R-squared for the logistic GLM
+cat("McFadden Pseudo R-squared:", PseudoR2(glm_surge, which = "McFadden"), "\n")
+```
+
+```{r}
+fe <- coef(glm_surge)
+se <- summary(glm_surge)$coefficients[, "Std. Error"]
+ 
+keep_pattern <- c("temp", "wind", "humidity", "clouds", "pressure", "rain", "time_period")
+idx <- sapply(names(fe), function(x) any(sapply(keep_pattern, function(p) startsWith(x, p))))
+ 
+or_df <- data.frame(
+  Variable = names(fe)[idx],
+  OR       = exp(fe[idx]),
+  Lower    = exp(fe[idx] - 1.96 * se[idx]),
+  Upper    = exp(fe[idx] + 1.96 * se[idx])
+)
+or_df$Variable <- gsub("time_period", "Time: ", or_df$Variable)
+ 
+ggplot(or_df, aes(x = reorder(Variable, OR), y = OR)) +
+  geom_point(size = 3, color = "steelblue") +
+  geom_errorbar(aes(ymin = Lower, ymax = Upper), width = 0.2, color = "steelblue") +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "grey50") +
+  coord_flip() +
+  labs(title = "Odds Ratios for Surge Occurrence (GLM)",
+       x = NULL, y = "Odds Ratio (95% CI)") +
+  theme_minimal()
+```
+
+```{r}
+fitted_vals <- fitted(glm_surge)
+resids      <- residuals(glm_surge, type = "response")
+ 
+n_bins <- 40
+bin_breaks <- quantile(fitted_vals, probs = seq(0, 1, length.out = n_bins + 1))
+bins <- cut(fitted_vals, breaks = bin_breaks, include.lowest = TRUE)
+ 
+bin_df <- data.frame(fitted_vals, resids, bins) %>%
+  group_by(bins) %>%
+  summarise(
+    avg_fitted = mean(fitted_vals),
+    avg_resid  = mean(resids),
+    se_resid   = sd(resids) / sqrt(n()),
+    n          = n(),
+    .groups = "drop"
+  ) %>%
+  filter(!is.na(bins))
+ 
+ggplot(bin_df, aes(x = avg_fitted, y = avg_resid)) +
+  geom_point(color = "steelblue", size = 2) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_ribbon(aes(ymin = -2 * se_resid, ymax = 2 * se_resid),
+              alpha = 0.15, fill = "grey50") +
+  labs(title = "Binned Residual Plot (GLM)",
+       x = "Average Fitted Probability", y = "Average Residual") +
+  theme_minimal()
 ```
 
 ### Research Question #3 
-(*Insert code and validation into the vignette*)
 
 ```{r}
 #Modelling GAM
@@ -458,26 +852,42 @@ print(glm_kfold)
 
 ## Results
 
-**Research Question 1:**Discuss the analysis and the results why or why
-not it worked\*
+**Research Question 1:**
 
-(*Insert code and validation for the analysis into the vignette*)
+The GAM explained approximately 92 percent of the deviance in ride prices, with an adjusted R squared of approximately 0.90. The dominant predictors were distance, cab type, and service name rather than weather conditions.
+ 
+**Figure #: Estimated Smooth Effects of Weather Variables on Log(Price):**
+ 
+Figure # displays the estimated smooth effects for each of the six weather variables on the log price scale, with shaded areas representing 95 percent confidence intervals and rug marks showing the distribution of observed values. Among the weather smooth terms, only cloud cover reached statistical significance with a p value of 0.002. Temperature showed a non-linear pattern but did not reach significance at the 0.05 level with a p value of 0.11. Atmospheric pressure was close to significance with a p value of 0.09 but did not cross the threshold. Wind, humidity, and rain showed no significant effects after controlling for the structural covariates, with their confidence intervals overlapping zero throughout. The practical magnitude of even the significant cloud cover effect was small. The smooth curves for all weather variables varied by less than 0.05 on the log price scale, translating to price differences of roughly 5 percent or less across the observed range of each variable.
+ 
+**Figure #: GAM Diagnostic Plots:**
+ 
+Figure # presents the standard GAM diagnostic checks. The QQ plot of deviance residuals in the top left panel was approximately linear, indicating that the Gamma distribution assumption was reasonable. The residuals versus linear predictor plot in the top right panel showed no strong systematic patterns, suggesting that the model adequately captured the relationship between covariates and price. The histogram of residuals in the bottom left panel confirmed an approximately symmetric distribution centred near zero. The response versus fitted plot in the bottom right panel demonstrated that the model captured the general price structure well, with points clustering around the diagonal. Overall, the Gamma family handled the skewed distribution appropriately and the diagnostics did not reveal major model misspecification.
+ 
+In summary, only cloud cover showed a statistically significant effect on ride prices among the six weather variables, but even this effect was practically negligible compared to structural factors such as distance, service type, and route. This suggests that during the observed period, the pricing algorithms of both Uber and Lyft were not meaningfully influenced by weather conditions.
 
-```{r}
+**Research Question 2:**
 
-```
-
-**Research Question 2:**Discuss the analysis and the results why or why
-not it worked\*
-
-(*Insert code and validation for the analysis into the vignette*)
-
-```{r}
-
-```
-
-**Research Question 3:**Discuss the analysis and the results why or why
-not it worked\*
+The McFadden pseudo R squared for the logistic GLM was 0.045. While this may appear low, pseudo R squared values for logistic regression are not directly comparable to OLS R squared. McFadden (1979) noted that values between 0.2 and 0.4 represent excellent fit in discrete choice models. A value of 0.045 is common for models predicting rare events, as the baseline rate of surge occurrence was only 8.2 percent. The model's value lies in identifying which predictors are associated with surge rather than in predicting individual ride outcomes.
+ 
+The analysis of deviance showed that pickup location was by far the strongest predictor of Lyft surge pricing, contributing a deviance reduction greater than all other predictors combined. Destination contributed a deviance reduction of approximately 32, and time period contributed approximately 12.5. Among the weather variables, only atmospheric pressure reached statistical significance with a deviance reduction of approximately 6, though even this effect was small in practical terms.
+ 
+One notable finding involved service type. After excluding Shared rides, the service type variable contributed exactly zero deviance to the model. This means that Lyft applies the surge multiplier uniformly across all remaining service tiers. Whether a rider orders a regular Lyft, Lyft XL, Lux, or Lux Black, the same surge multiplier applies. Surge is therefore a platform level decision based on location and time rather than a service level decision.
+ 
+**Figure #: Odds Ratios for Surge Occurrence (GLM):**
+ 
+Figure # displays the odds ratios with 95 percent confidence intervals for the weather and time fixed effects from the GLM. Values greater than 1.0 indicate higher surge probability while the dashed line at 1.0 represents no effect. The odds ratios for weather variables all clustered tightly around 1.0, confirming negligible effects. Morning rush had an odds ratio of approximately 1.08 compared to midday, meaning surge odds were about 8 percent higher during morning commute hours. Evening rush and night showed similar but slightly smaller elevations. Rain had an odds ratio near 1.0 but with an extremely wide confidence interval because the vast majority of observations had zero rainfall. The model simply did not have enough rainy rides to estimate the effect of rain with any precision.
+ 
+**Figure #: Binned Residual Plot (GLM):**
+ 
+Figure # shows the binned residual plot for the logistic GLM, which is the standard diagnostic for binary response models. The plot divides the fitted probabilities into 40 bins and displays the average residual within each bin, with grey bands indicating approximate 95 percent confidence bounds. The majority of points fell within the expected bounds, indicating that the model fit was adequate overall. There were a few points near the higher fitted probability range that approached or slightly exceeded the bounds, suggesting the model may slightly underperform for rides with high predicted surge probability. However, the overall pattern did not indicate serious model misspecification.
+ 
+For the GLMM robustness check, the random intercept for source had a standard deviation of 0.73 on the logit scale, confirming that substantial variation exists between pickup locations in terms of surge probability. This is consistent with the GLM finding that pickup location is the dominant predictor. The destination random intercept was near zero with a standard deviation of 0.04, indicating that the fixed effect dummy variables already fully capture destination level variation.
+ 
+The critical result of the robustness check is the consistency of the fixed effect estimates across the two models. All weather and time coefficients differed by less than 0.001 on the logit scale between the GLM and GLMM. This confirms that regardless of whether location is treated as a fixed or random effect, the conclusions about weather and time are virtually identical. With only 12 unique locations per grouping variable and over 21,000 observations per group, fixed effects can reliably estimate each location's contribution without requiring the shrinkage that random effects provide (Bolker et al., 2009; Gelman and Hill, 2007).
+ 
+These results did not support our hypothesis. Surge pricing is not primarily driven by temporal factors or weather. Instead, it is dominated by pickup location. The practical implication is that a rider's chances of encountering surge depend far more on where they ride than on when they ride or what the weather is doing.
+**Research Question 3:**
 
 **Data Summary Results GAM:**
 The data summary of the GAM indicates that cab combo is the most significant covariate alongside surge multiplier. The EDF for the GAM is 2.5 which does indicate a degree of non-linearity, the baseline for linear being one. Our r-squared values also indicate that the GAM accounts for 81.6% of the deviance apparent in the model.
