@@ -145,7 +145,8 @@ gam_model <- bam(
   data    = merged_df,
   family  = Gamma(link = "log"),
   method  = "fREML",
-  discrete = TRUE
+  discrete = TRUE,
+  select   = TRUE
 )
 
 summary(gam_model)

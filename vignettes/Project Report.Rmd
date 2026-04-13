@@ -35,6 +35,41 @@ library(DescTools)
 library(scales)
 library(tidyr)
 
+```
+
+**Front Matter** 
+
+Uber and Lyft Surge Pricing Analysis 
+By Lingyun Jiang (B00850695) and Sydney Parsons (B01068132) 
+Data Analysis STAT 4620/5620 Winter 25-26 
+Link to GitHub:
+<https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis>
+
+## Abstract (150 words)
+
+This is an analysis of Uber and Lyft Pricing in Boston Massachusetts for 23 days in late November to early December of 2018 (Munde, 2019). In this paper we cover three main research questions with the goal of determining the overall impacts on pricing for Uber and Lyft. 
+
+Ultimately we determined that the primary impacts on Uber and Lyft pricing are their cab types and their ride distance. The pricing for each of these ride shares are very segmented and stable within their type boundaries. Distance is the variable factor that changes the most, as riders choose rides that are further and shorter distances that will impact their ride cost. Although their prices do change with influences from our other variables mentioned, they are not significant enough when compared to the influence of cab type and distance on price.
+
+
+##Keywords 
+
+Uber, Lyft, Pricing, Surge, Holiday, Rushhour, DOW, Weather, Distance
+
+
+##Introduction Research questions and background information.
+
+**Research Question 1:**
+
+**Research Question 2:**
+
+**Research Question 3:**
+
+
+
+## Data Description:
+```{r}
+
 # Load merged data
 merged_data <- read.csv("../merged_data_cleaned.csv")
 merged_df <-merged_data
@@ -124,41 +159,6 @@ sum(!grepl(":", raw$hour_ts_boston))
 class(merged_data$hour_ts_boston)
 head(merged_data$hour_ts_boston)
 ```
-
-**Front Matter** 
-
-Uber and Lyft Surge Pricing Analysis 
-By Lingyun Jiang (B00850695) and Sydney Parsons (B01068132) 
-Data Analysis STAT 4620/5620 Winter 25-26 
-Link to GitHub:
-<https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis>
-
-## Abstract (150 words)
-
-This is an analysis of Uber and Lyft Pricing in Boston Massachusetts for 23 days in late November to early December of 2018 (Munde, 2019). In this paper we cover three main research questions with the goal of determining the overall impacts on pricing for Uber and Lyft. 
-
-Ultimately we determined that the primary impacts on Uber and Lyft pricing are their cab types and their ride distance. The pricing for each of these ride shares are very segmented and stable within their type boundaries. Distance is the variable factor that changes the most, as riders choose rides that are further and shorter distances that will impact their ride cost. Although their prices do change with influences from our other variables mentioned, they are not significant enough when compared to the influence of cab type and distance on price.
-
-
-##Keywords 
-
-Uber, Lyft, Pricing, Surge, Holiday, Rushhour, DOW, Weather, Distance
-
-
-##Introduction Research questions and background information.
-
-**Research Question 1:**
-
-**Research Question 2:**
-
-**Research Question 3:**
-
-
-
-## Data Description:
-
--   Data points description here\*\*
-
 
 **Variables:**
 
