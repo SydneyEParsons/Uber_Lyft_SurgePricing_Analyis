@@ -47,7 +47,6 @@ merged_data <- read.csv("../merged_data_cleaned.csv")
 
 
 ##Research Question #3
-#Make Weekend and Weekday Binary
 merged_data <- merged_data %>%
   mutate(
     hour_ts_boston = with_tz(ymd_hms(hour_ts, tz = "UTC"), tzone = "America/New_York"),
@@ -66,7 +65,7 @@ merged_data <- merged_data %>%
       date >= as.Date("2018-12-02") & date <= as.Date("2018-12-10") ~ "Hanukkah",
       TRUE ~ "None"
     ),
-    cab_combo = paste(cab_type, name, sep = "-") #Combining cab_type and name
+    cab_combo = paste(cab_type, name, sep = "-")
   )
 
 merged_data <- merged_data %>% filter(!is.na(hour))
