@@ -256,7 +256,7 @@ cat("Surge multiplier distribution:\n")
 table(lyft_df$surge_multiplier)
 ```
 
-**Figure 1: Surge Rate by Pickup Location:**
+**Figure 4: Surge Rate by Pickup Location:**
 
 ```{r}
 source_surge <- lyft_df %>%
@@ -282,7 +282,7 @@ ggplot(source_surge, aes(x = reorder(source, surge_rate), y = surge_rate)) +
 
 As shown in Figure 1, there was substantial variation in surge rates by pickup location with some locations showing surge rates above 30 percent while others remained below 10 percent. This suggested that geographic factors play a significant role in surge occurrence.
 
-**Figure 2: Surge Rate by Dropoff Location:**
+**Figure 5: Surge Rate by Dropoff Location:**
 
 ```{r}
 dest_surge <- lyft_df %>%
@@ -308,7 +308,7 @@ ggplot(dest_surge, aes(x = reorder(destination, surge_rate), y = surge_rate)) +
 
 Figure 2 presents a similar analysis for dropoff locations. The variation across destinations was also present though somewhat less pronounced than for pickup locations, indicating that where a ride begins may matter more than where it ends for surge pricing.
 
-**Figure 3: Hourly Surge Rate (Lyft):**
+**Figure 6: Hourly Surge Rate (Lyft):**
 
 ```{r}
 hour_surge <- lyft_df %>%
@@ -327,7 +327,7 @@ ggplot(hour_surge, aes(x = hour_of_day, y = surge_rate)) +
 
 Figure 3 showed that surge rates peaked during morning and evening commute hours, though the magnitude of the difference was moderate. The highest surge rates were observed in the early morning hours while midday showed the lowest rates overall.
 
-**Figure 4: Weather Conditions: Surge vs. Non-Surge:**
+**Figure 7: Weather Conditions: Surge vs. Non-Surge:**
 
 ```{r}
 weather_vars <- c("temp", "wind", "humidity", "clouds", "pressure", "rain")
@@ -356,7 +356,7 @@ ggplot(lyft_means, aes(x = Variable, y = mean_val, fill = Surge)) +
 
 Figure 4 compared standardized weather variable means between surge and non-surge rides. The differences were extremely small across all weather variables, providing early evidence that weather is not the primary trigger for surge pricing.
 
-**Figure 5: Surge Rate by Time Period and Day of Week:**
+**Figure 8: Surge Rate by Time Period and Day of Week:**
 
 ```{r}
 time_day_surge <- lyft_df %>%
@@ -381,7 +381,7 @@ Figure 5 presents a heatmap of surge rates across time periods and days of the w
 
 ### EDA: Research Question 3
 
-**Figure 1: Price Distribution By Cab Type:**
+**Figure 9: Price Distribution By Cab Type:**
 
 ```{r}
 ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
@@ -395,7 +395,7 @@ ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
 ```
 To begin our EDA plots for our third research question we plotted our cab combo data compared to price. This was a starting point as we further breakdown the pricing analysis in the coming EDA plots. In this EDA plot we used boxplots to demonstrate this distribution and median of the pricing data per each category. As you can see from the visualization the plots show very segmented data. Both ride hailing apps have cab-types that are very regimented with their pricing, there is limited overlap between the pricing of different cab types. 
 
-**Figure 2: Analyze Hourly Price on Normal Days of the Week:**
+**Figure 10: Analyze Hourly Price on Normal Days of the Week:**
 
 ```{r}
 #Analyze hourly price on normal days of the week
@@ -422,7 +422,7 @@ labs(title = "Analyze Hourly Price on Normal Days of the Week
 ```
 These line graphs show the mean pricing for the different cab combos during the days of the week. The lines overall remain very stable but there is greater variation with pricing in the higher price hailing tiers, specifically in Lyft-Lux Black, Lyft-Lux Black XL, Uber-Black, and Uber-Black SUV. These variances are not significant but it is clear there is more noise in these combos than the others.
 
-**Figure 3: Compare Day of the Week, Price and Cab Combo:**
+**Figure 11: Compare Day of the Week, Price and Cab Combo:**
 
 ```{r}
 #Compare day of week, price and cab_combo
@@ -465,7 +465,7 @@ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 Here we are focusing on the influence of the days of the week on the pricing of ride hailing platforms Uber and Lyft. Our following EDA plots is a colour coded bar plot and heat maps. These plots help illustrate the relationship between the days of the week and our cab combo. As apparent through the plots the pricing remains very consistent across each day of the week and cab types. 
 
-**Figure 4: Price Distribution by Day of The Week:**
+**Figure 12: Price Distribution by Day of The Week:**
 
 ```{r}
 ggplot(merged_data, aes(x = day_of_week, y = price, fill = day_of_week)) +
@@ -480,7 +480,7 @@ ggplot(merged_data, aes(x = day_of_week, y = price, fill = day_of_week)) +
 ```
 Since more variation was expected in the data as highlighted in our hypothesis, we plotted an additional EDA plot as a violin plot. This plot helps show the quantity of rides at each price point through the density of the waves. In our presentation it was highlighted that they were very uniform and that we should investigate further. After analysing the code we realized the smoothing we applied to the pots was distorting the final display. After removing that we were able to see the density of the prices more clearly. However, this plot reaffirms the lack of variation in pricing throughout the days of the week as seen in our initial EDA plots above.
 
-**Figure 5: Compare Weekday and Weekends to Price and Cab Combo:**
+**Figure 13: Compare Weekday and Weekends to Price and Cab Combo:**
 
 ```{r}
 #Compare weekday and weekends to price and cab_combo
@@ -504,7 +504,7 @@ labs(title = "Compare weekday and weekends to price and cab_combo", x="Is Weeken
 ```
 With little variation in the days of the week we analysed the data further. By plotting the week day against the weekend we aimed to try to identify price variations on a more general basis but this plot also did not show any notable variation in pricing from weekday to weekend.
 
-**Figure 6: Price Distribution By Holiday:**
+**Figure 14: Price Distribution By Holiday:**
 
 ```{r}
 #Comparing weekend and weekday pricing to holiday pricing
@@ -538,7 +538,7 @@ labs(title = "Comparing Holiday Pricing to Cab Combo", x="Holiday", y="Mean Pric
 ```
 For price distribution by holiday, we presumed traffic would be higher on these days due to people travelling for the holiday and having time off. However, as seen in the violin plots and the bar plots below that was not the case. This may indicate that the pricing was changing slightly between cab-type segments on Lyft rides. However, Uber does remain very constant in its pricing regardless of holiday. The bar graph also shows the Lyft ride prices being more incremental than Uber ride pricing which remains very stable. 
 
-**Figure 7: Comparing Cost of Rides on Holidays:**
+**Figure 15: Comparing Cost of Rides on Holidays:**
 
 ```{r}
 #Compare time of day price on normal days to time of day on holiday
@@ -563,7 +563,7 @@ labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price")
 ```
 To further visualise the pricing of Uber and Lyft on holidays we plotted them on line graphs. This provides an additional visualization outside of the violin plots. It is clear from these plots that the prices remain stable with small peaks later in the days presumably around the evening rush hour period.
 
-**Figure 8: Comparing Rush Hour Price for Weekdays to Price on Normal Weekends:**
+**Figure 16: Comparing Rush Hour Price for Weekdays to Price on Normal Weekends:**
 
 ```{r}
 #Comparing rush hour price for weekdays to price on weekends
@@ -609,7 +609,7 @@ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 In this EDA section we plotted the comparison of rush hour to weekdays and weekends on a bar plot categorized by cab-type. This plot demonstrates that the prices for rides remain steady across normal hours, morning rush and evening rush on both evenings and weekends. There are many bars on this plot and they are smaller but the numbers on the bars further confirm the limited change in pricing across the varying rush hours on weekdays and weekends.
 
-**Figure 9: Price Distribution by Rush Hour:**
+**Figure 17: Price Distribution by Rush Hour:**
 
 ```{r}
 ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
@@ -624,7 +624,7 @@ ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
 ```
 The following violin plot demonstrates the price distribution of Uber and Lyft apps during our three categorized rush hour periods. As can be seen in the plot the price remains very similar across all three rush hour periods. The wider sections of the violin plots in this EDA indicate that there are more rides at that price point. Both Uber and Lyft have very specific shapes that do not change as rush hour changes.
 
-**Figure 10: Compare Cab Combo, Holiday and Uber & Lyft Surge Multiplier:**
+**Figure 18: Compare Cab Combo, Holiday and Uber & Lyft Surge Multiplier:**
 
 ```{r}
 #Compare cab_combo, holiday and surge multiplier
@@ -649,7 +649,7 @@ labs(title = "Compare Cab Combo, Holiday & Surge Multiplier", x="Cab Type", y="S
 ```
 Surge multiplier was highlighted in our earlier research questions but we did also briefly plot it here to test its influence in our third research question. Uber remains constant because there was no observed surge price in this collected dataset. You can see the surge prices for Uber and Lyft here but a bar plot was not the most ideal for comparing surge across cab combo and holiday which is why we pivoted to a heatmap as can be seen in the following plot.
 
-**Figure 11: Lyft and Uber Compare Cab Combo, Holiday and Surge Multiplier:**
+**Figure 19: Lyft and Uber Compare Cab Combo, Holiday and Surge Multiplier:**
 
 ```{r}
 ggplot(data=holiday_surge_summary %>% filter(cab_type == "Lyft"), 
@@ -672,7 +672,7 @@ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 Here you can see a more clear breakdown of our surge visualization. A heatmap for this data is more appropriate because it shows the distribution through the colours and numbers on the plot in a much cleaner presentation. As we can see from the values of the surge multiplier for Lyft surge doesn’t change significantly over holidays compared to non-holidays.
 
-**Figure 12: Compare Pricing on Weekday Holidays to Rush Hour Pricing:**
+**Figure 20: Compare Pricing on Weekday Holidays to Rush Hour Pricing:**
 
 ```{r}
 #Compare pricing on weekday holidays to rush hour pricing
@@ -946,11 +946,11 @@ print(glm_kfold)
 
 The GAM explained approximately 92 percent of the deviance in ride prices, with an adjusted R squared of approximately 0.90. The dominant predictors were distance, cab type, and service name rather than weather conditions.
  
-**Figure #: Estimated Smooth Effects of Weather Variables on Log(Price):**
+**Figure 21: Estimated Smooth Effects of Weather Variables on Log(Price):**
  
 Figure # displays the estimated smooth effects for each of the six weather variables on the log price scale, with shaded areas representing 95 percent confidence intervals and rug marks showing the distribution of observed values. Among the weather smooth terms, only cloud cover reached statistical significance with a p value of 0.002. Temperature showed a non-linear pattern but did not reach significance at the 0.05 level with a p value of 0.11. Atmospheric pressure was close to significance with a p value of 0.09 but did not cross the threshold. Wind, humidity, and rain showed no significant effects after controlling for the structural covariates, with their confidence intervals overlapping zero throughout. The practical magnitude of even the significant cloud cover effect was small. The smooth curves for all weather variables varied by less than 0.05 on the log price scale, translating to price differences of roughly 5 percent or less across the observed range of each variable.
  
-**Figure #: GAM Diagnostic Plots:**
+**Figure 22: GAM Diagnostic Plots:**
  
 Figure # presents the standard GAM diagnostic checks. The QQ plot of deviance residuals in the top left panel was approximately linear, indicating that the Gamma distribution assumption was reasonable. The residuals versus linear predictor plot in the top right panel showed no strong systematic patterns, suggesting that the model adequately captured the relationship between covariates and price. The histogram of residuals in the bottom left panel confirmed an approximately symmetric distribution centred near zero. The response versus fitted plot in the bottom right panel demonstrated that the model captured the general price structure well, with points clustering around the diagonal. Overall, the Gamma family handled the skewed distribution appropriately and the diagnostics did not reveal major model misspecification.
  
@@ -964,11 +964,11 @@ The analysis of deviance showed that pickup location was by far the strongest pr
  
 One notable finding involved service type. After excluding Shared rides, the service type variable contributed exactly zero deviance to the model. This means that Lyft applies the surge multiplier uniformly across all remaining service tiers. Whether a rider orders a regular Lyft, Lyft XL, Lux, or Lux Black, the same surge multiplier applies. Surge is therefore a platform level decision based on location and time rather than a service level decision.
  
-**Figure #: Odds Ratios for Surge Occurrence (GLM):**
+**Figure 23: Odds Ratios for Surge Occurrence (GLM):**
  
 Figure # displays the odds ratios with 95 percent confidence intervals for the weather and time fixed effects from the GLM. Values greater than 1.0 indicate higher surge probability while the dashed line at 1.0 represents no effect. The odds ratios for weather variables all clustered tightly around 1.0, confirming negligible effects. Morning rush had an odds ratio of approximately 1.08 compared to midday, meaning surge odds were about 8 percent higher during morning commute hours. Evening rush and night showed similar but slightly smaller elevations. Rain had an odds ratio near 1.0 but with an extremely wide confidence interval because the vast majority of observations had zero rainfall. The model simply did not have enough rainy rides to estimate the effect of rain with any precision.
  
-**Figure #: Binned Residual Plot (GLM):**
+**Figure 24: Binned Residual Plot (GLM):**
  
 Figure # shows the binned residual plot for the logistic GLM, which is the standard diagnostic for binary response models. The plot divides the fitted probabilities into 40 bins and displays the average residual within each bin, with grey bands indicating approximate 95 percent confidence bounds. The majority of points fell within the expected bounds, indicating that the model fit was adequate overall. There were a few points near the higher fitted probability range that approached or slightly exceeded the bounds, suggesting the model may slightly underperform for rides with high predicted surge probability. However, the overall pattern did not indicate serious model misspecification.
  
@@ -977,18 +977,19 @@ For the GLMM robustness check, the random intercept for source had a standard de
 The critical result of the robustness check is the consistency of the fixed effect estimates across the two models. All weather and time coefficients differed by less than 0.001 on the logit scale between the GLM and GLMM. This confirms that regardless of whether location is treated as a fixed or random effect, the conclusions about weather and time are virtually identical. With only 12 unique locations per grouping variable and over 21,000 observations per group, fixed effects can reliably estimate each location's contribution without requiring the shrinkage that random effects provide (Bolker et al., 2009; Gelman and Hill, 2007).
  
 These results did not support our hypothesis. Surge pricing is not primarily driven by temporal factors or weather. Instead, it is dominated by pickup location. The practical implication is that a rider's chances of encountering surge depend far more on where they ride than on when they ride or what the weather is doing.
+
 **Research Question 3:**
 
 **Data Summary Results GAM:**
 The data summary of the GAM indicates that cab combo is the most significant covariate alongside surge multiplier. The EDF for the GAM is 2.5 which does indicate a degree of non-linearity, the baseline for linear being one. Our r-squared values also indicate that the GAM accounts for 81.6% of the deviance apparent in the model.
 
-**Figure 1- Residuals Plots:**
+**Figure 25: Residuals Plots:**
 The residual plots for our GAM give helpful insights into the model behaviour. The QQ Plot indicates that the model struggles at higher price values, this can be seen through the plot fitting the line well at the lower and middle values but curving upwards as the values increase. The residuals vs. Linear Predictor Plot and the Observed vs. Fitted Values Plot both have extreme banding. This we predict is due to how influential cab combo is on the price of Uber and Lyft ride prices. The bands on the Linear Predictor Plot do hover around zero however they peak in certain areas which indicates that the model is underestimating on certain high price rides. The observed vs. Fitted Values plot indicates there is variance being missed by the model. As described above the model accounts for 81.6% of the variance but there is still some that is not accounted for in this analysis. These gaps could be from covariates which were not included in the model for this research question. The Histogram of the Residuals is slightly right skewed as well which indicates that the mean is higher than the median, leading us to the conclusion we also drew from the QQ Plot which is that the model struggles predicting at higher price points.
 
 **Data Summary Results GLM:**
 Our GLM summary indicated that cab combo and surge multiplier are the most significant covariates for this model. The McFadden r-squared value we calculated is a 0.2469 which according to Stack Exchange applications of this function indicate a strong model fit (Reichenbach, 2014). 
 
-**Figure 2- Residuals Plots:** 
+**Figure 26: Residuals Plots:** 
 The residual plots for our GLM are very similar to the residual plots of our GAM. Since there was not a significant difference in the model construction and there was only one continuous variable that was smoothed the plots are nearly identical. Which means the model for GLM also struggles as prices of rides increase as can be seen in the upwards curve of the QQ Plot. There are large variances in the Residuals vs. Linear Predictor Plot which indicate the model is underestimating the values of prices. The Observed vs. Fitted Values Plot indicates that there is quite a variance between the observed and predicted values. Since the GLM model also doesn’t account for all of the deviance it is likely that there are influences from other covariates in our dataset that are not taken into account for this question in particular. Finally, our histogram for the GLM is also positive right-skewed which indicates that the model is underfitting on the higher prices which is another confirmation for our observations above.
 
 **K-Fold Cross Validation:**
