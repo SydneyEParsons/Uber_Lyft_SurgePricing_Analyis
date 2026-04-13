@@ -15,7 +15,7 @@ Authors@R: c(
     )
   )
 Description: This package was created to analyse the Uber and Lyft pricing data by Ravi Munde available on Kaggle (Munde, 2019).
-License: Public Domain - CCO 1.0 Universal.
+License: Public Domain -CCO 1.0 Universal.
 Encoding: UTF-8
 LazyData: true
 Suggests: 
