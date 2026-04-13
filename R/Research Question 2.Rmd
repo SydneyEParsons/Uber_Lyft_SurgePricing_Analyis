@@ -345,4 +345,8 @@ ggplot(bin_df, aes(x = avg_fitted, y = avg_resid)) +
   labs(title = "Binned Residual Plot (GLM)",
        x = "Average Fitted Probability", y = "Average Residual") +
   theme_minimal()
+
+# Pseudo R-squared
+library(DescTools)
+PseudoR2(glm_surge, which = "McFadden")
 ```
