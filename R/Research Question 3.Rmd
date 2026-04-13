@@ -169,7 +169,7 @@ geom_bar(
   position = "dodge") +
 geom_text(aes(label=round(mean_price, 2)),  size = 2.5, position=position_dodge(width=0.9)) +
 facet_wrap(~ cab_type) +
-labs(title = "Comparing weekend and weekday pricing to holiday pricing", x="Holiday", y="Mean Price") +
+labs(title = "Comparing Holiday Pricing to Cab Combo", x="Holiday", y="Mean Price") +
   coord_flip() 
 ```
 
