@@ -382,7 +382,6 @@ Figure 5 presents a heatmap of surge rates across time periods and days of the w
 ### EDA: Research Question 3
 
 **Figure 1: Price Distribution By Cab Type:**
-To begin our EDA plots for our third research question we plotted our cab combo data compared to price. This was a starting point as we further breakdown the pricing analysis in the coming EDA plots. In this EDA plot we used boxplots to demonstrate this distribution and median of the pricing data per each category. As you can see from the visualization the plots show very segmented data. Both ride hailing apps have cab-types that are very regimented with their pricing, there is limited overlap between the pricing of different cab types. 
 
 ```{r}
 ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
@@ -394,9 +393,9 @@ ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")
 ```
+To begin our EDA plots for our third research question we plotted our cab combo data compared to price. This was a starting point as we further breakdown the pricing analysis in the coming EDA plots. In this EDA plot we used boxplots to demonstrate this distribution and median of the pricing data per each category. As you can see from the visualization the plots show very segmented data. Both ride hailing apps have cab-types that are very regimented with their pricing, there is limited overlap between the pricing of different cab types. 
 
 **Figure 2: Analyze Hourly Price on Normal Days of the Week:**
-These line graphs show the mean pricing for the different cab combos during the days of the week. The lines overall remain very stable but there is greater variation with pricing in the higher price hailing tiers, specifically in Lyft-Lux Black, Lyft-Lux Black XL, Uber-Black, and Uber-Black SUV. These variances are not significant but it is clear there is more noise in these combos than the others.
 
 ```{r}
 #Analyze hourly price on normal days of the week
@@ -421,9 +420,9 @@ facet_wrap(~ cab_combo) +
 labs(title = "Analyze Hourly Price on Normal Days of the Week
 ", x="Hour", y="Mean Price") 
 ```
+These line graphs show the mean pricing for the different cab combos during the days of the week. The lines overall remain very stable but there is greater variation with pricing in the higher price hailing tiers, specifically in Lyft-Lux Black, Lyft-Lux Black XL, Uber-Black, and Uber-Black SUV. These variances are not significant but it is clear there is more noise in these combos than the others.
 
 **Figure 3: Compare Day of the Week, Price and Cab Combo:**
-Here we are focusing on the influence of the days of the week on the pricing of ride hailing platforms Uber and Lyft. Our following EDA plots is a colour coded bar plot and heat maps. These plots help illustrate the relationship between the days of the week and our cab combo. As apparent through the plots the pricing remains very consistent across each day of the week and cab types. 
 
 ```{r}
 #Compare day of week, price and cab_combo
@@ -464,9 +463,9 @@ labs(title = "Uber - Compare day of week, price and cab_combo
 ", x="Day of Week", y="Mean Price") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+Here we are focusing on the influence of the days of the week on the pricing of ride hailing platforms Uber and Lyft. Our following EDA plots is a colour coded bar plot and heat maps. These plots help illustrate the relationship between the days of the week and our cab combo. As apparent through the plots the pricing remains very consistent across each day of the week and cab types. 
 
 **Figure 4: Price Distribution by Day of The Week:**
-Since more variation was expected in the data as highlighted in our hypothesis, we plotted an additional EDA plot as a violin plot. This plot helps show the quantity of rides at each price point through the density of the waves. In our presentation it was highlighted that they were very uniform and that we should investigate further. After analysing the code we realized the smoothing we applied to the pots was distorting the final display. After removing that we were able to see the density of the prices more clearly. However, this plot reaffirms the lack of variation in pricing throughout the days of the week as seen in our initial EDA plots above.
 
 ```{r}
 ggplot(merged_data, aes(x = day_of_week, y = price, fill = day_of_week)) +
@@ -479,9 +478,9 @@ ggplot(merged_data, aes(x = day_of_week, y = price, fill = day_of_week)) +
   theme_minimal() +
   theme(legend.position = "none") 
 ```
+Since more variation was expected in the data as highlighted in our hypothesis, we plotted an additional EDA plot as a violin plot. This plot helps show the quantity of rides at each price point through the density of the waves. In our presentation it was highlighted that they were very uniform and that we should investigate further. After analysing the code we realized the smoothing we applied to the pots was distorting the final display. After removing that we were able to see the density of the prices more clearly. However, this plot reaffirms the lack of variation in pricing throughout the days of the week as seen in our initial EDA plots above.
 
 **Figure 5: Compare Weekday and Weekends to Price and Cab Combo:**
-With little variation in the days of the week we analysed the data further. By plotting the week day against the weekend we aimed to try to identify price variations on a more general basis but this plot also did not show any notable variation in pricing from weekday to weekend.
 
 ```{r}
 #Compare weekday and weekends to price and cab_combo
@@ -503,9 +502,9 @@ facet_wrap(~ cab_type) +
 labs(title = "Compare weekday and weekends to price and cab_combo", x="Is Weekend", y="Mean Price") +
   coord_flip() 
 ```
+With little variation in the days of the week we analysed the data further. By plotting the week day against the weekend we aimed to try to identify price variations on a more general basis but this plot also did not show any notable variation in pricing from weekday to weekend.
 
 **Figure 6: Price Distribution By Holiday:**
-For price distribution by holiday, we presumed traffic would be higher on these days due to people travelling for the holiday and having time off. However, as seen in the violin plots and the bar plots below that was not the case. This may indicate that the pricing was changing slightly between cab-type segments on Lyft rides. However, Uber does remain very constant in its pricing regardless of holiday. The bar graph also shows the Lyft ride prices being more incremental than Uber ride pricing which remains very stable. 
 
 ```{r}
 #Comparing weekend and weekday pricing to holiday pricing
@@ -537,9 +536,9 @@ facet_wrap(~ cab_type) +
 labs(title = "Comparing Holiday Pricing to Cab Combo", x="Holiday", y="Mean Price") +
   coord_flip() 
 ```
+For price distribution by holiday, we presumed traffic would be higher on these days due to people travelling for the holiday and having time off. However, as seen in the violin plots and the bar plots below that was not the case. This may indicate that the pricing was changing slightly between cab-type segments on Lyft rides. However, Uber does remain very constant in its pricing regardless of holiday. The bar graph also shows the Lyft ride prices being more incremental than Uber ride pricing which remains very stable. 
 
 **Figure 7: Comparing Cost of Rides on Holidays:**
-To further visualise the pricing of Uber and Lyft on holidays we plotted them on line graphs. This provides an additional visualization outside of the violin plots. It is clear from these plots that the prices remain stable with small peaks later in the days presumably around the evening rush hour period.
 
 ```{r}
 #Compare time of day price on normal days to time of day on holiday
@@ -562,9 +561,9 @@ geom_line() +
 facet_wrap(~ cab_combo) +
 labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price")
 ```
+To further visualise the pricing of Uber and Lyft on holidays we plotted them on line graphs. This provides an additional visualization outside of the violin plots. It is clear from these plots that the prices remain stable with small peaks later in the days presumably around the evening rush hour period.
 
 **Figure 8: Comparing Rush Hour Price for Weekdays to Price on Normal Weekends:**
-In this EDA section we plotted the comparison of rush hour to weekdays and weekends on a bar plot categorized by cab-type. This plot demonstrates that the prices for rides remain steady across normal hours, morning rush and evening rush on both evenings and weekends. There are many bars on this plot and they are smaller but the numbers on the bars further confirm the limited change in pricing across the varying rush hours on weekdays and weekends.
 
 ```{r}
 #Comparing rush hour price for weekdays to price on weekends
@@ -608,9 +607,9 @@ labs(title = "Uber - Comparing rush hour price for weekdays to price on normal w
 ", x="Rush Hour", y="Mean Price") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+In this EDA section we plotted the comparison of rush hour to weekdays and weekends on a bar plot categorized by cab-type. This plot demonstrates that the prices for rides remain steady across normal hours, morning rush and evening rush on both evenings and weekends. There are many bars on this plot and they are smaller but the numbers on the bars further confirm the limited change in pricing across the varying rush hours on weekdays and weekends.
 
 **Figure 9: Price Distribution by Rush Hour:**
-The following violin plot demonstrates the price distribution of Uber and Lyft apps during our three categorized rush hour periods. As can be seen in the plot the price remains very similar across all three rush hour periods. The wider sections of the violin plots in this EDA indicate that there are more rides at that price point. Both Uber and Lyft have very specific shapes that do not change as rush hour changes.
 
 ```{r}
 ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
@@ -623,9 +622,9 @@ ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
   theme_minimal() +
   theme(legend.position = "none") 
 ```
+The following violin plot demonstrates the price distribution of Uber and Lyft apps during our three categorized rush hour periods. As can be seen in the plot the price remains very similar across all three rush hour periods. The wider sections of the violin plots in this EDA indicate that there are more rides at that price point. Both Uber and Lyft have very specific shapes that do not change as rush hour changes.
 
 **Figure 10: Compare Cab Combo, Holiday and Uber & Lyft Surge Multiplier:**
-Surge multiplier was highlighted in our earlier research questions but we did also briefly plot it here to test its influence in our third research question. Uber remains constant because there was no observed surge price in this collected dataset. You can see the surge prices for Uber and Lyft here but a bar plot was not the most ideal for comparing surge across cab combo and holiday which is why we pivoted to a heatmap as can be seen in the following plot.
 
 ```{r}
 #Compare cab_combo, holiday and surge multiplier
@@ -648,9 +647,9 @@ facet_wrap(~ cab_type) +
 labs(title = "Compare Cab Combo, Holiday & Surge Multiplier", x="Cab Type", y="Surge Pricing") +
   coord_flip() 
 ```
+Surge multiplier was highlighted in our earlier research questions but we did also briefly plot it here to test its influence in our third research question. Uber remains constant because there was no observed surge price in this collected dataset. You can see the surge prices for Uber and Lyft here but a bar plot was not the most ideal for comparing surge across cab combo and holiday which is why we pivoted to a heatmap as can be seen in the following plot.
 
 **Figure 11: Lyft and Uber Compare Cab Combo, Holiday and Surge Multiplier:**
-Here you can see a more clear breakdown of our surge visualization. A heatmap for this data is more appropriate because it shows the distribution through the colours and numbers on the plot in a much cleaner presentation. As we can see from the values of the surge multiplier for Lyft surge doesn’t change significantly over holidays compared to non-holidays.
 
 ```{r}
 ggplot(data=holiday_surge_summary %>% filter(cab_type == "Lyft"), 
@@ -671,11 +670,9 @@ labs(title = "Uber - Compare Cab Combo, Holiday and Surge Multiplier
 ", x="Holiday", y="Cab Combo") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+Here you can see a more clear breakdown of our surge visualization. A heatmap for this data is more appropriate because it shows the distribution through the colours and numbers on the plot in a much cleaner presentation. As we can see from the values of the surge multiplier for Lyft surge doesn’t change significantly over holidays compared to non-holidays.
 
 **Figure 12: Compare Pricing on Weekday Holidays to Rush Hour Pricing:**
-For our comparison of weekday holidays to rush hour we initially plotted a bar graph and then pivoted to a heatmap to better visualize the values. The prices over all Uber and Lyft rides during all three rush hour periods on holidays were very stable. There was a slight dip on the price of Lyft rides in the evenings of Hannukah, and a slight increase in price of Uber rides in the normal hours of Cyber Monday.
-
-After completing our exploratory analyses we proceeded to create the models for each of our research questions. The information provided from our analysis helped us choose methods in an informed manner.
 
 ```{r}
 #Compare pricing on weekday holidays to rush hour pricing
@@ -706,6 +703,9 @@ labs(title = "Compare pricing on weekday holidays to rush hour pricing
 ", x="Rush Hour", y="Holiday") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+For our comparison of weekday holidays to rush hour we initially plotted a bar graph and then pivoted to a heatmap to better visualize the values. The prices over all Uber and Lyft rides during all three rush hour periods on holidays were very stable. There was a slight dip on the price of Lyft rides in the evenings of Hannukah, and a slight increase in price of Uber rides in the normal hours of Cyber Monday.
+
+After completing our exploratory analyses we proceeded to create the models for each of our research questions. The information provided from our analysis helped us choose methods in an informed manner.
 
 ## Methods
 
