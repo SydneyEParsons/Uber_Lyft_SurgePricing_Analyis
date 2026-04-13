@@ -59,13 +59,29 @@ Uber, Lyft, Pricing, Surge, Holiday, Rushhour, DOW, Weather, Distance
 
 ##Introduction Research questions and background information.
 
-**Research Question 1:**
+After reviewing the Uber and Lyft pricing dataset by Munde on Kaggle we chose to look more deeply at the impacts on Uber and Lyft ride pricing. As users of both ride share apps ourselves we thought it would be an interesting and practical analysis for an app people use daily. Our analysis plans to break down the variables that are included in the dataset and determine which of them most significantly impact price.
+	
+Ride-hailing platforms like Uber and Lyft have become a central part of urban transportation. Their pricing, however, remains opaque to most riders. Prices fluctuate based on factors that are not always visible, and the platforms themselves reveal little about how their algorithms work. This raises a practical question: what actually drives the price?
 
-**Research Question 2:**
+One common assumption is that weather plays a role. On a rainy evening or a freezing morning, more people request rides while fewer drivers are willing to work. Basic supply-and-demand logic suggests this should push prices up. Yet whether this intuition holds in practice, and whether the effect is large enough to matter, has not been thoroughly tested with real data.
 
-**Research Question 3:**
+A related question concerns surge pricing. Lyft applies a visible surge multiplier when demand exceeds supply in a given area. Understanding what triggers this multiplier is useful for riders who want to avoid paying more and for researchers studying platform pricing behavior. Weather, time of day, day of week, and geographic location are all plausible candidates. 
 
+We address three research questions. The first asks whether weather conditions have a significant and possibly non-linear effect on ride price, after controlling for distance, route, cab type, and service level. The second asks what factors, including weather, time, and location, are associated with the occurrence of Lyft surge pricing. The third, conducted by the second author, examines the impact of rush hours and holidays on pricing for both platforms.
 
+The analysis combines a Generalized Additive Model (GAM) for the price question with a logistic Generalized Linear Model (GLM) and a Generalized Linear Mixed Model (GLMM) robustness check for the surge question. Each model was chosen to match the structure of the response variable and the nature of the research question, as described in the relevant sections below.
+
+**Research Question 1:** After controlling for distance, route, cab type, and service level, do weather conditions (temperature, wind, humidity, cloud cover, pressure, and rain) have a significant effect on ride price, and is the relationship non-linear?
+
+Our hypothesis was that adverse weather conditions, such as rain or sub-freezing temperatures, would trigger price increases that do not occur under mild conditions. We also expected this relationship to be non-linear rather than linear. A drop from 50°F to 40°F might have little effect, but a drop from 35°F to 25°F, where conditions become genuinely uncomfortable, could produce a larger price shift. If such threshold effects exist, a model that allows flexible curve shapes would be necessary to detect them.
+
+**Research Question 2:** For Lyft rides, what factors, including weather conditions, time of day, and route, are associated with the occurrence of surge pricing?
+
+We hypothesized that surge pricing would be primarily driven by temporal factors such as rush hours and by weather conditions such as rain or low temperature, rather than by geographic location alone. The reasoning was that adverse weather reduces driver supply relative to rider demand, which should trigger the platform’s surge algorithm. We also expected that certain time periods, particularly morning and evening commutes, would show elevated surge rates.
+
+**Research Question 3:** What is the impact of holiday, rush hour, day of week, and cab type on the prices for Uber and Lyft rides during the specified time period?
+
+For the hypothesis for our final research question we predict that there will be an impact on pricing related to rush hours, holidays and days of the week. We assume this because time of day and day of the week would be different depending on rush hours, normal hours, and if people are commuting to work. This thinking directly relates to our assumptions on holidays as well that if there are holidays people will be travelling or participating in holiday events. Leading us to expect to see increases in pricing during these periods.
 
 ## Data Description:
 ```{r}
@@ -162,42 +178,25 @@ head(merged_data$hour_ts_boston)
 
 **Variables:**
 
-- Weather 
-Units include Temperature (°F), Clouds (0-1, fraction of sky covered), Humidity (Percentage), Pressure (Millibars), Rain (Inches), Wind (mph).
-- Distance 
-Ride distance is measured in Miles.
-- Pickup Location 
-Includes: Black Bay, Northeastern University, Fenway, Boston University, Theatre District, Beacon Hill, South Station, Financial District, West End, North Station, Haymarket Square, and North End.
-- Holidays (Hannukah, Cyber Monday)
-Hanukkah (December 2-10, 2018) and Cyber Monday (November 26, 2018).
-- Rush hour 
-Our rush hour times include Morning (6am - 10am), Midday (10 am - 4pm), Evening (4pm - 8pm), and Night (8pm - 6am).
-- Surge 
-1.0 - 3.0, Uber remains at a constant surge multiplier of 1 because there was no observed surge pricing for Uber in the construction of this dataset.
-- Price 
-Ride prices are measured in US Dollars (USD).
-- Uber
-One of the ride hailing apps being analysed in this dataset.
-- Lyft
-The other ride hailing app is being analysed in this dataset.
-- Cab type 
-Includes: Lux, Lux Black, Lux Black XL, Lyft, Lyft XL,  Shared, Black, Black SUV, UberPool, UberX, UberXL, WAV.
-- Time 
-Time is in the Boston Time Zone.
-Time was displayed as Boston Time zone instead of the original Unix so it can show the precise time calculations for the area.
-- Day of the week 
-Days of the week: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.
-- Cab_combo
-This combines Uber and Lyft with their respective cab types so the data can be categorized by ride hailing app and cab type all in one.
-Lyft-Lux, Lyft-Lux Black, Lyft-Lux Black XL, Lyft-Lyft, Lyft-Lyft XL, Lyft-Shared, Uber-Black, Uber-Black SUV, Uber-UberPool, Uber-UberX, Uber-UberXL, Uber-WAV
-
+- **Weather:** Temperature (°F), Clouds (0-1, fraction of sky covered), Humidity (Percentage), Pressure (Millibars), Rain (Inches), Wind (mph).
+- **Distance:** Ride distance is measured in Miles.
+- **Pickup Location:** Includes: Black Bay, Northeastern University, Fenway, Boston University, Theatre District, Beacon Hill, South Station, Financial District, West End, North Station, Haymarket Square, and North End.
+- **Holidays:** Hanukkah (December 2-10, 2018) and Cyber Monday (November 26, 2018).
+- **Rush hour:** Morning (6am - 10am), Midday (10 am - 4pm), Evening (4pm - 8pm), and Night (8pm - 6am).
+- **Surge:** 1.0 - 3.0, Uber remains at a constant surge multiplier of 1 because there was no observed surge pricing for Uber in the construction of this dataset.
+- **Price:** Ride prices are measured in US Dollars (USD).
+- **Uber:** One of the ride hailing apps being analysed in this dataset.
+- **Lyft:** The other ride hailing app is being analysed in this dataset.
+- **Cab type:** Includes: Lux, Lux Black, Lux Black XL, Lyft, Lyft XL,  Shared, Black, Black SUV, UberPool, UberX, UberXL, WAV.
+- **Time:** Time was displayed as Boston Time zone instead of the original Unix so it can show the precise time calculations for the area.
+- **Day of the week:** Days of the week: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.
+- **Cab_combo:** This combines Uber and Lyft with their respective cab types so the data can be categorized by ride hailing app and cab type all in one. Lyft-Lux, Lyft-Lux Black, Lyft-Lux Black XL, Lyft-Lyft, Lyft-Lyft XL, Lyft-Shared, Uber-Black, Uber-Black SUV, Uber-UberPool, Uber-UberX, Uber-UberXL, Uber-WAV
 
 This report uses a dataset of approximately 637,000 ride-hailing trips collected in the Boston area over a 23-day window from late November to mid-December 2018 (Munde, 2019). The data, obtained from Kaggle, includes ride-level information from both Uber and Lyft alongside hourly weather observations for six variables: temperature, wind speed, humidity, cloud cover, atmospheric pressure, and rainfall. As noted in our proposal we read a paper published on this dataset in 2023 by Huang which detailed the units used in the measurements (Huang, 2023). In addition to reading the paper we sought out confirmations of the units on our own by reviewing how different weather patterns are measured, conditions in Massachusetts and standard measurement units in the United States.
 
 To clean the data we started by checking the number of unique values for timestamps and for duplicates of the data. No duplicates were found but there were much less time stamps than rows in our dataset. This led us to converting cab ride times from Unix to POSIXct so we could have them categorized to their nearest hour. Since the dataset focused on Uber and Lyft we removed the values for Taxi that were included in the data. The number of data points for Taxi was low compared to Uber and Lyft datapoints and since Taxis are not a ride hailing app as specified by our research questions we ultimately removed them during cleaning. To finish off our data cleaning we merged the cab rides dataset with the weather values to create our clean merged data file.
 
 Throughout our project we used many of the tools from our statistical analysis toolbox. After identifying our research questions and reviewing the data we conducted our exploratory analyses. This process included many different visualizations and plots of the data alone and compared to other values. Our exploratory analysis was split into each of our individual research questions; this helped us focus specifically on the covariates important to that specific question. 
-
 
 ### EDA: Research Question 1
 
@@ -1045,7 +1044,100 @@ Our findings for our second research question indicated that surge pricing is pr
 Research Question #3
 Our third and final analysis led us to the conclusion that cab combo and surge multiplier are the primary influences on ride pricing for both Uber and Lyft. Surge multiplier was analysed more deeply in our second research question but in question three we did determine its strong significance. This does align with part of our initial hypothesis where we hypothesized cab combo would be the primary influence on price. However, in our hypothesis we had also predicted that rush hour, holiday and day of the week would be significant influences on price but that was not what our findings returned. The GLM was successful in representing the analysis of our dataset as can be confirmed by our EDA and our model validation through k-fold cross validation which yielded an r-squared value of 81.75%.
 
-
 ## Limitations:
 
+Several limitations should be considered when interpreting these results. The most significant is the narrow observation window. The dataset covers only 23 days from late November to mid December 2018, with temperatures ranging from approximately 20 to 55 degrees Fahrenheit. This window does not include extreme weather events such as blizzards, ice storms, or heat waves. It is plausible that weather effects on price and surge would emerge under more extreme conditions that our data does not contain.
+The absence of Uber surge data is another important limitation. Because the API always returned a surge multiplier of 1.0 for Uber rides, we cannot make any claims about Uber's surge behaviour. Our surge findings apply only to Lyft.
+The binary coding of surge discards information about surge magnitude. A ride with a 1.25 multiplier and a ride with a 3.0 multiplier are treated identically. An ordinal or continuous model could in principle recover this information, but the extreme rarity of high surge levels in our data made such models infeasible.
+The rain variable presents a particular challenge. With 59 percent of missing values replaced by zero, our estimate of rain's effect is likely conservative. The wide confidence interval on rain's odds ratio in the surge model reflects this uncertainty.
+Rides in this dataset are not fully independent. The same routes are sampled repeatedly across the 23 day period, and rides at nearby times likely share similar conditions. Neither the GAM nor the GLM explicitly accounts for this temporal or spatial correlation. While this is unlikely to change the direction of our findings, it may affect the precision of the standard errors.
+Since the timeframe for the data collection was limited to only 23 days, we believe assumptions may have been made about data points in the construction of the dataset. Something that indicates this limitation to us is the fact that all cab combo categories have very similar amounts of data. If this was simulated or the data was filtered out in construction of the dataset it could have an impact on our final conclusions.
+
+The dataset locations are limited to areas of Boston Massachusetts which limits the broader application of our conclusions. Since Uber and Lyft are used in many regions there may be different influences on pricing and surge multiplier in those regions that we were not able to analyse.
+
+Looking ahead, as more data is made public on Uber and Lyft ride hailing services in different cities and at different times of the year we believe that it would be interesting to further analyse how these factors influence ride-hailing pricing. 
+
+We would also like to acknowledge that due to time constraints and the scope of the project requirements our analysis may not cover all insights obtainable from this dataset. 
+
 ## References
+Anthropic. (2026). Claude (claude-sonnet-4-6) [Large language model]. https://claude.ai
+
+Atlassian. (n.d.). A complete guide to violin plots. Atlassian. 
+https://www.atlassian.com/data/charts/violin-plot-complete-guide
+
+Bates, D., Mächler, M., Bolker, B., & Walker, S. (2015). Fitting linear mixed-effects models using lme4. Journal of Statistical Software, 67(1), 1–48. https://doi.org/10.18637/jss.v067.i01
+
+Bolker, B. M., Brooks, M. E., Clark, C. J., Geange, S. W., Poulsen, J. R., Stevens, M. H. H., & White, J.-S. S. (2009). Generalized linear mixed models: a practical guide for ecology and evolution. Trends in Ecology & Evolution, 24(3), 127–135. https://doi.org/10.1016/j.tree.2008.10.008
+
+Castillo, J. C., Knoepfle, D., & Weyl, G. (2017). Surge Pricing Solves the Wild Goose Chase. Proceedings of the 2017 ACM Conference on Economics and Computation. https://doi.org/10.1145/3033274.3085098
+
+CRAN. (n.d.). Getting started with gratia. CRAN. 
+https://cran.r-project.org/web/packages/gratia/vignettes/gratia.html
+
+Farshad, K. (2024). Essential Regression Evaluation Metrics: MSE, RMSE, MAE, R², and Adjusted 
+R². Medium. https://farshadabdulazeez.medium.com/essential-regression-evaluation-metrics-mse-rmse-mae-r%C2%B2-and-adjusted-r%C2%B2-0600daa1c03a
+
+Finnstats. (2021). Adding text labels to ggplot2 bar chart. R-Bloggers. 
+https://www.r-bloggers.com/2021/09/adding-text-labels-to-ggplot2-bar-chart-2/
+
+Gelman, A. and Hill, J. (2007). Data Analysis Using Regression and Multilevel/Hierarchical Models. Cambridge University Press.
+
+Harrell, F. (2024). What Does a Statistical Method Assume? Statistical Thinking. https://www.fharrell.com/post/assume/
+
+Huang, H. (2023). Ridesharing Price Prediction: Exploring the strategies of Dynamic Pricing. Highlights in Business Economics and Management, 10, 106–110. https://doi.org/10.54097/hbem.v10i.7963
+
+Jones, M. A., Guarinello, M., Soderberg, C., & Wasser, L. A. (2020). Time series 02: Dealing 
+with dates & times in R - as.Date, POSIXct, POSIXlt. National Ecological Observatory Network. https://www.neonscience.org/resources/learning-hub/tutorials/dc-convert-date-time-posix-r
+
+Kurui, M. (2025). Mastering Gamma GLM in Statsmodels: A Python Tutorial. CodePointtech. https://codepointtech.com/mastering-gamma-glm-in-statsmodels-a-python-tutorial/
+
+Munde, R. (2019). Uber & Lyft cab prices. Kaggle. https://www.kaggle.com/datasets/ravi72munde/uber-lyft-cab-prices
+
+OpenAI. (2026). ChatGPT [Large language model]. https://chatgpt.com/
+
+Osborn, L. (n.d.). Boston Weather in December. Current Results Weather and Science Facts. https://www.currentresults.com/Weather/Massachusetts/Places/boston-weather-in-december.php
+
+Psychology Town. (2025). Exploring the concept of dispersion in data analysis. Psychology Town. https://psychology.town/statistics/dispersion-concept-data-analysis/
+
+Reichenbach, M. (2014). McFadden's pseudo-R2 interpretation. Cross Validated. 
+https://stats.stackexchange.com/questions/82105/mcfaddens-pseudo-r2-interpretation
+
+RDocumentation. (2019). grep: Pattern matching and replacement. 
+RDocumentation. https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/grep
+
+Signorell, A., Mainwaring, B., & Wollschlaeger, D. (n.d.). Pseudo R2 statistics. CRAN. https://search.r-project.org/CRAN/refmans/DescTools/html/PseudoR2.html
+
+Signorell, A. (2025). Tools for descriptive statistics and exploratory data analysis. 
+RDocumentation. https://www.rdocumentation.org/packages/DescTools/versions/0.99.60
+
+Simpson, G. L., (2024). gratia: An R package for exploring generalized additive models. Journal of Open Source Software, 9(104), 6962, https://doi.org/10.21105/joss.06962
+
+The R Graph Gallery. (n.d.). Basic barplot with ggplot2. The R Graph Gallery. 
+https://r-graph-gallery.com/218-basic-barplots-with-ggplot2.html
+
+The R Graph Gallery. (n.d.). ggplot2 heatmap. The R Graph Gallery. https://r-graph-gallery.com/79-levelplot-with-ggplot2.html
+
+TidyVerse. (n.d.). Violin plot. ggplot2. 
+https://ggplot2.tidyverse.org/reference/geom_violin.html
+
+Tran, T.-A. (2025). Model diagnostics for GAM (generalised additive model). Cross Validated. 
+https://stats.stackexchange.com/questions/664508/model-diagnostics-for-gam-generalised-additive-model
+
+Wood, S. N. (2017). Generalized Additive Models: An Introduction with R (2nd ed.). Chapman and Hall/CRC.
+
+Vaisala contributors. (n.d.). Relative humidity – what is it and why is it important? Vaisala. https://www.vaisala.com/en/blog/2018-10/relative-humidity-what-it-and-why-it-important
+Wikipedia Contributors. (2026). Imperial Units. Wikipedia. https://en.wikipedia.org/wiki/Imperial_units
+
+Wikipedia contributors. (2025). Cloud cover. Wikipedia. https://en.wikipedia.org/wiki/Cloud_cover
+
+
+##AI Use Statement
+
+AI tools such as Claude AI, ChatGPT and Grammarly were used. For the report, it was used to assist and enhance the writing. For the code it was used to assist and debug the code. The content in this project and the conclusions drawn from the data are our own.
+
+
+
+
+
+‌
+
