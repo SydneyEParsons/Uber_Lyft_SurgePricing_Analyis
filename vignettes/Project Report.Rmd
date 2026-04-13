@@ -162,6 +162,41 @@ head(merged_data$hour_ts_boston)
 
 **Variables:**
 
+- Weather 
+Units include Temperature (°F), Clouds (0-1, fraction of sky covered), Humidity (Percentage), Pressure (Millibars), Rain (Inches), Wind (mph).
+- Distance 
+Ride distance is measured in Miles.
+- Pickup Location 
+Includes: Black Bay, Northeastern University, Fenway, Boston University, Theatre District, Beacon Hill, South Station, Financial District, West End, North Station, Haymarket Square, and North End.
+- Holidays (Hannukah, Cyber Monday)
+Hanukkah (December 2-10, 2018) and Cyber Monday (November 26, 2018).
+- Rush hour 
+Our rush hour times include Morning (6am - 10am), Midday (10 am - 4pm), Evening (4pm - 8pm), and Night (8pm - 6am).
+- Surge 
+1.0 - 3.0, Uber remains at a constant surge multiplier of 1 because there was no observed surge pricing for Uber in the construction of this dataset.
+- Price 
+Ride prices are measured in US Dollars (USD).
+- Uber
+One of the ride hailing apps being analysed in this dataset.
+- Lyft
+The other ride hailing app is being analysed in this dataset.
+- Cab type 
+Includes: Lux, Lux Black, Lux Black XL, Lyft, Lyft XL,  Shared, Black, Black SUV, UberPool, UberX, UberXL, WAV.
+- Time 
+Time is in the Boston Time Zone.
+Time was displayed as Boston Time zone instead of the original Unix so it can show the precise time calculations for the area.
+- Day of the week 
+Days of the week: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.
+- Cab_combo
+This combines Uber and Lyft with their respective cab types so the data can be categorized by ride hailing app and cab type all in one.
+Lyft-Lux, Lyft-Lux Black, Lyft-Lux Black XL, Lyft-Lyft, Lyft-Lyft XL, Lyft-Shared, Uber-Black, Uber-Black SUV, Uber-UberPool, Uber-UberX, Uber-UberXL, Uber-WAV
+
+
+This report uses a dataset of approximately 637,000 ride-hailing trips collected in the Boston area over a 23-day window from late November to mid-December 2018 (Munde, 2019). The data, obtained from Kaggle, includes ride-level information from both Uber and Lyft alongside hourly weather observations for six variables: temperature, wind speed, humidity, cloud cover, atmospheric pressure, and rainfall. As noted in our proposal we read a paper published on this dataset in 2023 by Huang which detailed the units used in the measurements (Huang, 2023). In addition to reading the paper we sought out confirmations of the units on our own by reviewing how different weather patterns are measured, conditions in Massachusetts and standard measurement units in the United States.
+
+To clean the data we started by checking the number of unique values for timestamps and for duplicates of the data. No duplicates were found but there were much less time stamps than rows in our dataset. This led us to converting cab ride times from Unix to POSIXct so we could have them categorized to their nearest hour. Since the dataset focused on Uber and Lyft we removed the values for Taxi that were included in the data. The number of data points for Taxi was low compared to Uber and Lyft datapoints and since Taxis are not a ride hailing app as specified by our research questions we ultimately removed them during cleaning. To finish off our data cleaning we merged the cab rides dataset with the weather values to create our clean merged data file.
+
+Throughout our project we used many of the tools from our statistical analysis toolbox. After identifying our research questions and reviewing the data we conducted our exploratory analyses. This process included many different visualizations and plots of the data alone and compared to other values. Our exploratory analysis was split into each of our individual research questions; this helped us focus specifically on the covariates important to that specific question. 
 
 
 ### EDA: Research Question 1
@@ -999,6 +1034,17 @@ To confirm this model we used k-fold cross validation with 10 folds. This was to
 We used both models to analyse the data prior to deciding on a singular model, but ultimately we chose the GLM. Prior to editing our analysis we had compared the GLM and GAM using AIC, which was not an accurate comparison since different models are not directly comparable. After reviewing the code and our analysis we looked at our existing code summaries and model covariates practically. There was only one continuous covariate in our model (hour), and although the EDF in the GAM was 2.5 indicating non-linearity hour is not significant enough to warrant keeping the GAM.  As discussed in the course it makes sense to choose the more simple model in situations like these when results and performance are similar. 
 
 ## Conclusion:
+Our analysis of the Uber and Lyft pricing dataset by Munde led us to draw new conclusions and confirmed parts of our initial hypotheses. 
+
+Research Question #1 
+For our first research question we found that weather conditions have a statistically detectable but practically negligible effect on ride prices. After controlling for distance, cab type, and route, the GAM showed that only cloud cover had a statistically significant effect on price (p equals 0.002), but its practical magnitude was negligible. Temperature showed a non-linear pattern but did not reach statistical significance (p equals 0.11). The remaining weather variables, including wind, humidity, pressure, and rain, were also not significant. Other weather variables, including wind, humidity, and rain, showed no significant effects. This is the opposite of what we predicted in our hypothesis, which was that adverse weather would lead to meaningful price increases. The data suggest that during this observation period, weather did not play a substantial role in the pricing algorithms of either platform.
+
+Research Question #2 
+Our findings for our second research question indicated that surge pricing is predominantly driven by pickup location, with time of day playing a secondary role. Weather conditions showed no meaningful association with surge occurrence. We initially hypothesized that surge would be primarily influenced by weather and rush hour patterns rather than by location alone, but the data clearly indicated otherwise. The GLMM robustness check confirmed these findings. Although the source random effect captured non-trivial between location variance, all weather and time coefficients remained virtually identical across the GLM and GLMM. This stability demonstrates that our conclusions are robust to the choice of how location is modelled. With only 12 locations and over 21,000 observations per group, fixed effects provide reliable estimates without requiring random effects. 
+
+Research Question #3
+Our third and final analysis led us to the conclusion that cab combo and surge multiplier are the primary influences on ride pricing for both Uber and Lyft. Surge multiplier was analysed more deeply in our second research question but in question three we did determine its strong significance. This does align with part of our initial hypothesis where we hypothesized cab combo would be the primary influence on price. However, in our hypothesis we had also predicted that rush hour, holiday and day of the week would be significant influences on price but that was not what our findings returned. The GLM was successful in representing the analysis of our dataset as can be confirmed by our EDA and our model validation through k-fold cross validation which yielded an r-squared value of 81.75%.
+
 
 ## Limitations:
 
