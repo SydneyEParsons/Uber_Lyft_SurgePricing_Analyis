@@ -10,19 +10,26 @@ editor_options:
     wrap: 72
 ---
 
-**Front Matter** 
+**Front Matter**
 
-Uber and Lyft Surge Pricing Analysis 
-By Lingyun Jiang (B00850695) and Sydney Parsons (B01068132) 
-Data Analysis STAT 4620/5620 Winter 25-26 
+Uber and Lyft Surge Pricing Analysis By Lingyun Jiang (B00850695) and
+Sydney Parsons (B01068132) 
+
+Data Analysis STAT 4620/5620 Winter 25-26
+
 Link to GitHub:
 <https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis>
 
+
 *Note:* Before running the code please generate the
-merged_data_cleaned.csv. To generate this file ensure you have saved the raw data
-files from the repository here (https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis/tree/main) and then run Cleaning And Merging The Data.R found in the R folder here on GitHub (https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis/blob/main/R/Cleaning%20And%20Merging%20The%20Data.R).
-Due to file size limitations we were unable to upload the compiled merged_data_cleaned.csv file
-directly.
+merged_data_cleaned.csv. To generate this file ensure you have saved the
+raw data files from the repository here
+(<https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis/tree/main>)
+and then run Cleaning And Merging The Data.R found in the R folder here
+on GitHub
+(<https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis/blob/main/R/Cleaning%20And%20Merging%20The%20Data.R>).
+Due to file size limitations we were unable to upload the compiled
+merged_data_cleaned.csv file directly.
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -30,6 +37,7 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+
 
 ```{r setup}
 library(dplyr)
@@ -46,43 +54,109 @@ library(lme4)
 
 ## Abstract
 
-This is an analysis of Uber and Lyft Pricing in Boston Massachusetts for 23 days in late November to early December of 2018 (Munde, 2019). In this paper we cover three main research questions with the goal of determining the overall impacts on pricing for Uber and Lyft. 
+This is an analysis of Uber and Lyft Pricing in Boston Massachusetts for
+23 days in late November to early December of 2018 (Munde, 2019). In
+this paper we cover three main research questions with the goal of
+determining the overall impacts on pricing for Uber and Lyft.
 
-Ultimately we determined that the primary impacts on Uber and Lyft pricing are their cab types and their ride distance. The pricing for each of these ride shares are very segmented and stable within their type boundaries. Distance is the variable factor that changes the most, as riders choose rides that are further and shorter distances that will impact their ride cost. Although their prices do change with influences from our other variables mentioned, they are not significant enough when compared to the influence of cab type and distance on price.
+Ultimately we determined that the primary impacts on Uber and Lyft
+pricing are their cab types and their ride distance. The pricing for
+each of these ride shares are very segmented and stable within their
+type boundaries. Distance is the variable factor that changes the most,
+as riders choose rides that are further and shorter distances that will
+impact their ride cost. Although their prices do change with influences
+from our other variables mentioned, they are not significant enough when
+compared to the influence of cab type and distance on price.
 
-
-##Keywords 
+## Keywords
 
 Uber, Lyft, Pricing, Surge, Holiday, Rushhour, DOW, Weather, Distance
 
+## Introduction Research questions and background information.
 
-##Introduction Research questions and background information.
+After reviewing the Uber and Lyft pricing dataset by Munde on Kaggle we
+chose to look more deeply at the impacts on Uber and Lyft ride pricing.
+As users of both ride share apps ourselves we thought it would be an
+interesting and practical analysis for an app people use daily. Our
+analysis plans to break down the variables that are included in the
+dataset and determine which of them most significantly impact price.
 
-After reviewing the Uber and Lyft pricing dataset by Munde on Kaggle we chose to look more deeply at the impacts on Uber and Lyft ride pricing. As users of both ride share apps ourselves we thought it would be an interesting and practical analysis for an app people use daily. Our analysis plans to break down the variables that are included in the dataset and determine which of them most significantly impact price.
-	
-Ride-hailing platforms like Uber and Lyft have become a central part of urban transportation. Their pricing, however, remains opaque to most riders. Prices fluctuate based on factors that are not always visible, and the platforms themselves reveal little about how their algorithms work. This raises a practical question: what actually drives the price?
+Ride-hailing platforms like Uber and Lyft have become a central part of
+urban transportation. Their pricing, however, remains opaque to most
+riders. Prices fluctuate based on factors that are not always visible,
+and the platforms themselves reveal little about how their algorithms
+work. This raises a practical question: what actually drives the price?
 
-One common assumption is that weather plays a role. On a rainy evening or a freezing morning, more people request rides while fewer drivers are willing to work. Basic supply-and-demand logic suggests this should push prices up. Yet whether this intuition holds in practice, and whether the effect is large enough to matter, has not been thoroughly tested with real data.
+One common assumption is that weather plays a role. On a rainy evening
+or a freezing morning, more people request rides while fewer drivers are
+willing to work. Basic supply-and-demand logic suggests this should push
+prices up. Yet whether this intuition holds in practice, and whether the
+effect is large enough to matter, has not been thoroughly tested with
+real data.
 
-A related question concerns surge pricing. Lyft applies a visible surge multiplier when demand exceeds supply in a given area. Understanding what triggers this multiplier is useful for riders who want to avoid paying more and for researchers studying platform pricing behavior. Weather, time of day, day of week, and geographic location are all plausible candidates. 
+A related question concerns surge pricing. Lyft applies a visible surge
+multiplier when demand exceeds supply in a given area. Understanding
+what triggers this multiplier is useful for riders who want to avoid
+paying more and for researchers studying platform pricing behavior.
+Weather, time of day, day of week, and geographic location are all
+plausible candidates.
 
-We address three research questions. The first asks whether weather conditions have a significant and possibly non-linear effect on ride price, after controlling for distance, route, cab type, and service level. The second asks what factors, including weather, time, and location, are associated with the occurrence of Lyft surge pricing. The third, conducted by the second author, examines the impact of rush hours and holidays on pricing for both platforms.
+We address three research questions. The first asks whether weather
+conditions have a significant and possibly non-linear effect on ride
+price, after controlling for distance, route, cab type, and service
+level. The second asks what factors, including weather, time, and
+location, are associated with the occurrence of Lyft surge pricing. The
+third, conducted by the second author, examines the impact of rush hours
+and holidays on pricing for both platforms.
 
-The analysis combines a Generalized Additive Model (GAM) for the price question with a logistic Generalized Linear Model (GLM) and a Generalized Linear Mixed Model (GLMM) robustness check for the surge question. Each model was chosen to match the structure of the response variable and the nature of the research question, as described in the relevant sections below.
+The analysis combines a Generalized Additive Model (GAM) for the price
+question with a logistic Generalized Linear Model (GLM) and a
+Generalized Linear Mixed Model (GLMM) robustness check for the surge
+question. Each model was chosen to match the structure of the response
+variable and the nature of the research question, as described in the
+relevant sections below.
 
-**Research Question 1:** After controlling for distance, route, cab type, and service level, do weather conditions (temperature, wind, humidity, cloud cover, pressure, and rain) have a significant effect on ride price, and is the relationship non-linear?
+**Research Question 1:** After controlling for distance, route, cab
+type, and service level, do weather conditions (temperature, wind,
+humidity, cloud cover, pressure, and rain) have a significant effect on
+ride price, and is the relationship non-linear?
 
-Our hypothesis was that adverse weather conditions, such as rain or sub-freezing temperatures, would trigger price increases that do not occur under mild conditions. We also expected this relationship to be non-linear rather than linear. A drop from 50°F to 40°F might have little effect, but a drop from 35°F to 25°F, where conditions become genuinely uncomfortable, could produce a larger price shift. If such threshold effects exist, a model that allows flexible curve shapes would be necessary to detect them.
+Our hypothesis was that adverse weather conditions, such as rain or
+sub-freezing temperatures, would trigger price increases that do not
+occur under mild conditions. We also expected this relationship to be
+non-linear rather than linear. A drop from 50°F to 40°F might have
+little effect, but a drop from 35°F to 25°F, where conditions become
+genuinely uncomfortable, could produce a larger price shift. If such
+threshold effects exist, a model that allows flexible curve shapes would
+be necessary to detect them.
 
-**Research Question 2:** For Lyft rides, what factors, including weather conditions, time of day, and route, are associated with the occurrence of surge pricing?
+**Research Question 2:** For Lyft rides, what factors, including weather
+conditions, time of day, and route, are associated with the occurrence
+of surge pricing?
 
-We hypothesized that surge pricing would be primarily driven by temporal factors such as rush hours and by weather conditions such as rain or low temperature, rather than by geographic location alone. The reasoning was that adverse weather reduces driver supply relative to rider demand, which should trigger the platform’s surge algorithm. We also expected that certain time periods, particularly morning and evening commutes, would show elevated surge rates.
+We hypothesized that surge pricing would be primarily driven by temporal
+factors such as rush hours and by weather conditions such as rain or low
+temperature, rather than by geographic location alone. The reasoning was
+that adverse weather reduces driver supply relative to rider demand,
+which should trigger the platform’s surge algorithm. We also expected
+that certain time periods, particularly morning and evening commutes,
+would show elevated surge rates.
 
-**Research Question 3:** What is the impact of holiday, rush hour, day of week, and cab type on the prices for Uber and Lyft rides during the specified time period?
+**Research Question 3:** What is the impact of holiday, rush hour, day
+of week, and cab type on the prices for Uber and Lyft rides during the
+specified time period?
 
-For the hypothesis for our final research question we predict that there will be an impact on pricing related to rush hours, holidays and days of the week. We assume this because time of day and day of the week would be different depending on rush hours, normal hours, and if people are commuting to work. This thinking directly relates to our assumptions on holidays as well that if there are holidays people will be travelling or participating in holiday events. Leading us to expect to see increases in pricing during these periods.
+For the hypothesis for our final research question we predict that there
+will be an impact on pricing related to rush hours, holidays and days of
+the week. We assume this because time of day and day of the week would
+be different depending on rush hours, normal hours, and if people are
+commuting to work. This thinking directly relates to our assumptions on
+holidays as well that if there are holidays people will be travelling or
+participating in holiday events. Leading us to expect to see increases
+in pricing during these periods.
 
 ## Data Description:
+
 ```{r}
 
 # Load merged data
@@ -168,7 +242,8 @@ merged_data <- merged_data %>% filter(!is.na(hour))
 lyft_data <- merged_data %>%
   filter(cab_type == "Lyft")
 
-raw <- read.csv("../merged_data_cleaned.csv") #Shows how many data points don't have a time
+raw <- read.csv("../merged_data_cleaned.csv") 
+#Shows how many data points don't have a time
 sum(!grepl(":", raw$hour_ts_boston))
 
 class(merged_data$hour_ts_boston)
@@ -177,25 +252,71 @@ head(merged_data$hour_ts_boston)
 
 **Variables:**
 
-- **Weather:** Temperature (°F), Clouds (0-1, fraction of sky covered), Humidity (Percentage), Pressure (Millibars), Rain (Inches), Wind (mph).
-- **Distance:** Ride distance is measured in Miles.
-- **Pickup Location:** Includes: Black Bay, Northeastern University, Fenway, Boston University, Theatre District, Beacon Hill, South Station, Financial District, West End, North Station, Haymarket Square, and North End.
-- **Holidays:** Hanukkah (December 2-10, 2018) and Cyber Monday (November 26, 2018).
-- **Rush hour:** Morning (6am - 10am), Midday (10 am - 4pm), Evening (4pm - 8pm), and Night (8pm - 6am).
-- **Surge:** 1.0 - 3.0, Uber remains at a constant surge multiplier of 1 because there was no observed surge pricing for Uber in the construction of this dataset.
-- **Price:** Ride prices are measured in US Dollars (USD).
-- **Uber:** One of the ride hailing apps being analysed in this dataset.
-- **Lyft:** The other ride hailing app is being analysed in this dataset.
-- **Cab type:** Includes: Lux, Lux Black, Lux Black XL, Lyft, Lyft XL,  Shared, Black, Black SUV, UberPool, UberX, UberXL, WAV.
-- **Time:** Time was displayed as Boston Time zone instead of the original Unix so it can show the precise time calculations for the area.
-- **Day of the week:** Days of the week: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.
-- **Cab_combo:** This combines Uber and Lyft with their respective cab types so the data can be categorized by ride hailing app and cab type all in one. Lyft-Lux, Lyft-Lux Black, Lyft-Lux Black XL, Lyft-Lyft, Lyft-Lyft XL, Lyft-Shared, Uber-Black, Uber-Black SUV, Uber-UberPool, Uber-UberX, Uber-UberXL, Uber-WAV
+-   **Weather:** Temperature (°F), Clouds (0-1, fraction of sky
+    covered), Humidity (Percentage), Pressure (Millibars), Rain
+    (Inches), Wind (mph).
+-   **Distance:** Ride distance is measured in Miles.
+-   **Pickup Location:** Includes: Black Bay, Northeastern University,
+    Fenway, Boston University, Theatre District, Beacon Hill, South
+    Station, Financial District, West End, North Station, Haymarket
+    Square, and North End.
+-   **Holidays:** Hanukkah (December 2-10, 2018) and Cyber Monday
+    (November 26, 2018).
+-   **Rush hour:** Morning (6am - 10am), Midday (10 am - 4pm), Evening
+    (4pm - 8pm), and Night (8pm - 6am).
+-   **Surge:** 1.0 - 3.0, Uber remains at a constant surge multiplier of
+    1 because there was no observed surge pricing for Uber in the
+    construction of this dataset.
+-   **Price:** Ride prices are measured in US Dollars (USD).
+-   **Uber:** One of the ride hailing apps being analysed in this
+    dataset.
+-   **Lyft:** The other ride hailing app is being analysed in this
+    dataset.
+-   **Cab type:** Includes: Lux, Lux Black, Lux Black XL, Lyft, Lyft XL,
+    Shared, Black, Black SUV, UberPool, UberX, UberXL, WAV.
+-   **Time:** Time was displayed as Boston Time zone instead of the
+    original Unix so it can show the precise time calculations for the
+    area.
+-   **Day of the week:** Days of the week: Monday, Tuesday, Wednesday,
+    Thursday, Friday, Saturday, Sunday.
+-   **Cab_combo:** This combines Uber and Lyft with their respective cab
+    types so the data can be categorized by ride hailing app and cab
+    type all in one. Lyft-Lux, Lyft-Lux Black, Lyft-Lux Black XL,
+    Lyft-Lyft, Lyft-Lyft XL, Lyft-Shared, Uber-Black, Uber-Black SUV,
+    Uber-UberPool, Uber-UberX, Uber-UberXL, Uber-WAV
 
-This report uses a dataset of approximately 637,000 ride-hailing trips collected in the Boston area over a 23-day window from late November to mid-December 2018 (Munde, 2019). The data, obtained from Kaggle, includes ride-level information from both Uber and Lyft alongside hourly weather observations for six variables: temperature, wind speed, humidity, cloud cover, atmospheric pressure, and rainfall. As noted in our proposal we read a paper published on this dataset in 2023 by Huang which detailed the units used in the measurements (Huang, 2023). In addition to reading the paper we sought out confirmations of the units on our own by reviewing how different weather patterns are measured, conditions in Massachusetts and standard measurement units in the United States.
+This report uses a dataset of approximately 637,000 ride-hailing trips
+collected in the Boston area over a 23-day window from late November to
+mid-December 2018 (Munde, 2019). The data, obtained from Kaggle,
+includes ride-level information from both Uber and Lyft alongside hourly
+weather observations for six variables: temperature, wind speed,
+humidity, cloud cover, atmospheric pressure, and rainfall. As noted in
+our proposal we read a paper published on this dataset in 2023 by Huang
+which detailed the units used in the measurements (Huang, 2023). In
+addition to reading the paper we sought out confirmations of the units
+on our own by reviewing how different weather patterns are measured,
+conditions in Massachusetts and standard measurement units in the United
+States.
 
-To clean the data we started by checking the number of unique values for timestamps and for duplicates of the data. No duplicates were found but there were much less time stamps than rows in our dataset. This led us to converting cab ride times from Unix to POSIXct so we could have them categorized to their nearest hour. Since the dataset focused on Uber and Lyft we removed the values for Taxi that were included in the data. The number of data points for Taxi was low compared to Uber and Lyft datapoints and since Taxis are not a ride hailing app as specified by our research questions we ultimately removed them during cleaning. To finish off our data cleaning we merged the cab rides dataset with the weather values to create our clean merged data file.
+To clean the data we started by checking the number of unique values for
+timestamps and for duplicates of the data. No duplicates were found but
+there were much less time stamps than rows in our dataset. This led us
+to converting cab ride times from Unix to POSIXct so we could have them
+categorized to their nearest hour. Since the dataset focused on Uber and
+Lyft we removed the values for Taxi that were included in the data. The
+number of data points for Taxi was low compared to Uber and Lyft
+datapoints and since Taxis are not a ride hailing app as specified by
+our research questions we ultimately removed them during cleaning. To
+finish off our data cleaning we merged the cab rides dataset with the
+weather values to create our clean merged data file.
 
-Throughout our project we used many of the tools from our statistical analysis toolbox. After identifying our research questions and reviewing the data we conducted our exploratory analyses. This process included many different visualizations and plots of the data alone and compared to other values. Our exploratory analysis was split into each of our individual research questions; this helped us focus specifically on the covariates important to that specific question. 
+Throughout our project we used many of the tools from our statistical
+analysis toolbox. After identifying our research questions and reviewing
+the data we conducted our exploratory analyses. This process included
+many different visualizations and plots of the data alone and compared
+to other values. Our exploratory analysis was split into each of our
+individual research questions; this helped us focus specifically on the
+covariates important to that specific question.
 
 ### EDA: Research Question 1
 
@@ -209,7 +330,13 @@ ggplot(merged_df, aes(x = price)) +
   theme_minimal()
 ```
 
-For our first research question we began by examining the distribution of ride prices. As shown in Figure 1, the histogram revealed a strong right skew with the majority of rides concentrated at lower prices and a long tail extending toward more expensive service tiers. This pattern suggested that a model assuming normally distributed errors would not be appropriate and that the Gamma distribution would better capture the shape of the response variable.
+For our first research question we began by examining the distribution
+of ride prices. As shown in Figure 1, the histogram revealed a strong
+right skew with the majority of rides concentrated at lower prices and a
+long tail extending toward more expensive service tiers. This pattern
+suggested that a model assuming normally distributed errors would not be
+appropriate and that the Gamma distribution would better capture the
+shape of the response variable.
 
 **Figure 2: Temperature vs. Price (Log Scale) by Platform:**
 
@@ -228,7 +355,16 @@ ggplot(merged_df, aes(x = temp, y = price)) +
   theme_minimal()
 ```
 
-We then plotted temperature against price on a log scale with a GAM smoother overlaid on a random subsample. As shown in Figure 2, the smoother revealed a slight non-linear trend, but the effect was visually minor compared to the spread of the data. This indicated that while a non-linear relationship may exist, its practical magnitude is small relative to other sources of price variation. The horizontal banding pattern visible in both panels reflects the distinct pricing tiers of different service levels (e.g., UberPool, UberX, Black), which produce discrete price clusters. Within each tier, prices show little variation across the temperature range.
+We then plotted temperature against price on a log scale with a GAM
+smoother overlaid on a random subsample. As shown in Figure 2, the
+smoother revealed a slight non-linear trend, but the effect was visually
+minor compared to the spread of the data. This indicated that while a
+non-linear relationship may exist, its practical magnitude is small
+relative to other sources of price variation. The horizontal banding
+pattern visible in both panels reflects the distinct pricing tiers of
+different service levels (e.g., UberPool, UberX, Black), which produce
+discrete price clusters. Within each tier, prices show little variation
+across the temperature range.
 
 **Figure 3: Correlation Between Weather and Price by Service Type:**
 
@@ -259,9 +395,17 @@ ggplot(cor_long, aes(x = `Weather Variable`, y = cab_label, fill = Correlation))
   theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ```
 
-Figure 3 presents the unadjusted Pearson correlations between weather variables and price for each service type. The correlations were uniformly weak across all service types with most values falling between negative 0.01 and positive 0.01. Temperature showed the strongest individual correlation, but it remained small in absolute terms. These patterns indicated that weather variables are unlikely to be dominant price drivers, motivating our use of a model that can detect subtle and potentially non-linear effects.
+Figure 3 presents the unadjusted Pearson correlations between weather
+variables and price for each service type. The correlations were
+uniformly weak across all service types with most values falling between
+negative 0.01 and positive 0.01. Temperature showed the strongest
+individual correlation, but it remained small in absolute terms. These
+patterns indicated that weather variables are unlikely to be dominant
+price drivers, motivating our use of a model that can detect subtle and
+potentially non-linear effects.
 
 ### EDA: Research Question 2
+
 ```{r fig.width=8, fig.height=8}
 # Confirm Uber surge is always 1, only Lyft has variation
 merged_df %>%
@@ -276,7 +420,11 @@ merged_df %>%
   )
 ```
 
-For our second research question we focused on the Lyft subset of the data because Uber showed a constant surge multiplier of 1.0 throughout the entire dataset. Shared rides were excluded as they also showed no surge variation, which would cause estimation problems in a logistic regression.
+For our second research question we focused on the Lyft subset of the
+data because Uber showed a constant surge multiplier of 1.0 throughout
+the entire dataset. Shared rides were excluded as they also showed no
+surge variation, which would cause estimation problems in a logistic
+regression.
 
 ```{r fig.width=8, fig.height=8}
 # Focus on Lyft only, exclude Shared rides
@@ -313,7 +461,10 @@ ggplot(source_surge, aes(x = reorder(source, surge_rate), y = surge_rate)) +
   theme_minimal()
 ```
 
-As shown in Figure 4, there was substantial variation in surge rates by pickup location, ranging from 1.8% at North End to 13.4% at Back Bay. This suggested that pickup location factors play a significant role in surge occurrence.
+As shown in Figure 4, there was substantial variation in surge rates by
+pickup location, ranging from 1.8% at North End to 13.4% at Back Bay.
+This suggested that pickup location factors play a significant role in
+surge occurrence.
 
 **Figure 5: Surge Rate by Dropoff Location:**
 
@@ -339,7 +490,10 @@ ggplot(dest_surge, aes(x = reorder(destination, surge_rate), y = surge_rate)) +
   theme_minimal()
 ```
 
-Figure 5 presents a similar analysis for dropoff locations. The variation across destinations was also present though somewhat less pronounced than for pickup locations, indicating that where a ride begins may matter more than where it ends for surge pricing.
+Figure 5 presents a similar analysis for dropoff locations. The
+variation across destinations was also present though somewhat less
+pronounced than for pickup locations, indicating that where a ride
+begins may matter more than where it ends for surge pricing.
 
 **Figure 6: Hourly Surge Rate (Lyft):**
 
@@ -358,7 +512,11 @@ ggplot(hour_surge, aes(x = hour_of_day, y = surge_rate)) +
   theme_minimal()
 ```
 
-Figure 6 showed that surge rates peaked around 8am at approximately 9.5%, with a secondary peak around 3pm. The lowest surge rate occurred around 11am at approximately 7.0%. The overall range was narrow, spanning only about 2.5 percentage points, indicating that time of day has a limited effect on surge occurrence.
+Figure 6 showed that surge rates peaked around 8am at approximately
+9.5%, with a secondary peak around 3pm. The lowest surge rate occurred
+around 11am at approximately 7.0%. The overall range was narrow,
+spanning only about 2.5 percentage points, indicating that time of day
+has a limited effect on surge occurrence.
 
 **Figure 7: Weather Conditions: Surge vs. Non-Surge:**
 
@@ -381,13 +539,17 @@ ggplot(lyft_means, aes(x = Variable, y = mean_val, fill = Surge)) +
            width = 0.6, alpha = 0.8) +
   scale_fill_manual(values = c("No Surge" = "grey60", "Surge" = "steelblue")) +
   labs(title = "Weather Conditions: Surge vs. Non-Surge (Lyft)",
-       subtitle = "Standardized means (z-scores); small differences suggest weather is not the primary surge driver",
+       subtitle = "Standardized means (z-scores); small differences suggest weather is not the 
+       primary surge driver",
        x = NULL, y = "Standardized Mean") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 20, hjust = 1))
 ```
 
-Figure 7 compared standardized weather variable means between surge and non-surge rides. The differences were extremely small across all weather variables, providing early evidence that weather is not the primary trigger for surge pricing.
+Figure 7 compared standardized weather variable means between surge and
+non-surge rides. The differences were extremely small across all weather
+variables, providing early evidence that weather is not the primary
+trigger for surge pricing.
 
 **Figure 8: Surge Rate by Time Period and Day of Week:**
 
@@ -410,7 +572,11 @@ ggplot(time_day_surge, aes(x = day_of_week, y = time_period, fill = surge_rate))
   theme(panel.grid = element_blank())
 ```
 
-Figure 8 presents a heatmap of surge rates across time periods and days of the week. The heatmap confirmed that temporal patterns exist but are secondary to location effects. Certain combinations of time period and day showed slightly elevated surge rates, but no single temporal factor dominated the way that pickup location did.
+Figure 8 presents a heatmap of surge rates across time periods and days
+of the week. The heatmap confirmed that temporal patterns exist but are
+secondary to location effects. Certain combinations of time period and
+day showed slightly elevated surge rates, but no single temporal factor
+dominated the way that pickup location did.
 
 ### EDA: Research Question 3
 
@@ -427,7 +593,14 @@ ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
         legend.position = "none")
 ```
 
-To begin our EDA plots for our third research question we plotted our cab combo data compared to price. This was a starting point as we further breakdown the pricing analysis in the coming EDA plots. In this EDA plot we used boxplots to demonstrate this distribution and median of the pricing data per each category. As you can see from the visualization the plots show very segmented data. Both ride hailing apps have cab-types that are very regimented with their pricing, there is limited overlap between the pricing of different cab types. 
+To begin our EDA plots for our third research question we plotted our
+cab combo data compared to price. This was a starting point as we
+further breakdown the pricing analysis in the coming EDA plots. In this
+EDA plot we used boxplots to demonstrate this distribution and median of
+the pricing data per each category. As you can see from the
+visualization the plots show very segmented data. Both ride hailing apps
+have cab-types that are very regimented with their pricing, there is
+limited overlap between the pricing of different cab types.
 
 **Figure 10: Analyze Hourly Price on Normal Days of the Week:**
 
@@ -442,20 +615,27 @@ normal_rush_dayofweek_summary <- merged_data %>%
     median_price = median(price, na.rm = TRUE)
   )
 
-ggplot(data=normal_rush_dayofweek_summary %>% filter(cab_type == "Lyft"), mapping =aes(x=hour, y=mean_price, color=day_of_the_week)) +
+ggplot(data=normal_rush_dayofweek_summary %>% filter(cab_type == "Lyft"), 
+       mapping =aes(x=hour, y=mean_price, color=day_of_the_week)) +
 geom_line() +
 facet_wrap(~ cab_combo) +
 labs(title = "Analyze hourly price on normal days of the week
 ", x="hour", y="mean_price") 
 
-ggplot(data=normal_rush_dayofweek_summary %>% filter(cab_type == "Uber"), mapping =aes(x=hour, y=mean_price, color=day_of_the_week)) +
+ggplot(data=normal_rush_dayofweek_summary %>% filter(cab_type == "Uber"), 
+       mapping =aes(x=hour, y=mean_price, color=day_of_the_week)) +
 geom_line() +
 facet_wrap(~ cab_combo) +
 labs(title = "Analyze Hourly Price on Normal Days of the Week
 ", x="Hour", y="Mean Price") 
 ```
 
-These line graphs show the mean pricing for the different cab combos during the days of the week. The lines overall remain very stable but there is greater variation with pricing in the higher price hailing tiers, specifically in Lyft-Lux Black, Lyft-Lux Black XL, Uber-Black, and Uber-Black SUV. These variances are not significant but it is clear there is more noise in these combos than the others.
+These line graphs show the mean pricing for the different cab combos
+during the days of the week. The lines overall remain very stable but
+there is greater variation with pricing in the higher price hailing
+tiers, specifically in Lyft-Lux Black, Lyft-Lux Black XL, Uber-Black,
+and Uber-Black SUV. These variances are not significant but it is clear
+there is more noise in these combos than the others.
 
 **Figure 11: Compare Day of the Week, Price and Cab Combo:**
 
@@ -499,7 +679,12 @@ labs(title = "Uber - Compare day of week, price and cab_combo
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-Here we are focusing on the influence of the days of the week on the pricing of ride hailing platforms Uber and Lyft. Our following EDA plots is a colour coded bar plot and heat maps. These plots help illustrate the relationship between the days of the week and our cab combo. As apparent through the plots the pricing remains very consistent across each day of the week and cab types. 
+Here we are focusing on the influence of the days of the week on the
+pricing of ride hailing platforms Uber and Lyft. Our following EDA plots
+is a colour coded bar plot and heat maps. These plots help illustrate
+the relationship between the days of the week and our cab combo. As
+apparent through the plots the pricing remains very consistent across
+each day of the week and cab types.
 
 **Figure 12: Price Distribution by Day of The Week:**
 
@@ -515,7 +700,16 @@ ggplot(merged_data, aes(x = day_of_the_week, y = price, fill = day_of_the_week))
   theme(legend.position = "none") 
 ```
 
-Since more variation was expected in the data as highlighted in our hypothesis, we plotted an additional EDA plot as a violin plot. This plot helps show the quantity of rides at each price point through the density of the waves. In our presentation it was highlighted that they were very uniform and that we should investigate further. After analysing the code we realized the smoothing we applied to the pots was distorting the final display. After removing that we were able to see the density of the prices more clearly. However, this plot reaffirms the lack of variation in pricing throughout the days of the week as seen in our initial EDA plots above.
+Since more variation was expected in the data as highlighted in our
+hypothesis, we plotted an additional EDA plot as a violin plot. This
+plot helps show the quantity of rides at each price point through the
+density of the waves. In our presentation it was highlighted that they
+were very uniform and that we should investigate further. After
+analysing the code we realized the smoothing we applied to the pots was
+distorting the final display. After removing that we were able to see
+the density of the prices more clearly. However, this plot reaffirms the
+lack of variation in pricing throughout the days of the week as seen in
+our initial EDA plots above.
 
 **Figure 13: Compare Weekday and Weekends to Price and Cab Combo:**
 
@@ -530,17 +724,23 @@ weekend_summary <- merged_data %>%
   )
 print(weekend_summary)
 
-ggplot(data=weekend_summary, mapping =aes(x=factor(is_weekend, labels=c("Weekday", "Weekend")), y=mean_price, fill=cab_combo)) +
+ggplot(data=weekend_summary, 
+       mapping =aes(x=factor(is_weekend, labels=c("Weekday", "Weekend")), 
+                    y=mean_price, fill=cab_combo)) +
 geom_bar(
   stat = "identity",
   position = "dodge") +
 geom_text(aes(label=round(mean_price, 2)),  size = 2, position=position_dodge(width=0.9)) +
 facet_wrap(~ cab_type) +
-labs(title = "Compare weekday and weekends to price and cab_combo", x="Is Weekend", y="Mean Price") +
+labs(title = "Compare weekday and weekends to price and cab_combo", 
+     x="Is Weekend", y="Mean Price") +
   coord_flip() 
 ```
 
-With little variation in the days of the week we analysed the data further. By plotting the week day against the weekend we aimed to try to identify price variations on a more general basis but this plot also did not show any notable variation in pricing from weekday to weekend.
+With little variation in the days of the week we analysed the data
+further. By plotting the week day against the weekend we aimed to try to
+identify price variations on a more general basis but this plot also did
+not show any notable variation in pricing from weekday to weekend.
 
 **Figure 14: Price Distribution By Holiday:**
 
@@ -565,7 +765,9 @@ ggplot(merged_data, aes(x = holiday, y = price, fill = holiday)) +
   theme_minimal() +
   theme(legend.position = "none") 
 
-ggplot(data=holiday_summary_detailed, mapping =aes(x=factor(holiday, labels=c("Cyber Monday", "Hanukkah", "None")), y=mean_price, fill=cab_combo)) +
+ggplot(data=holiday_summary_detailed, 
+       mapping =aes(x=factor(holiday, labels=c("Cyber Monday", "Hanukkah", "None")), 
+                    y=mean_price, fill=cab_combo)) +
 geom_bar(
   stat = "identity",
   position = "dodge") +
@@ -575,7 +777,14 @@ labs(title = "Comparing Holiday Pricing to Cab Combo", x="Holiday", y="Mean Pric
   coord_flip() 
 ```
 
-For price distribution by holiday, we presumed traffic would be higher on these days due to people travelling for the holiday and having time off. However, as seen in the violin plots and the bar plots above that was not the case. This may indicate that the pricing was changing slightly between cab-type segments on Lyft rides. However, Uber does remain very constant in its pricing regardless of holiday. The bar graph also shows the Lyft ride prices being more incremental than Uber ride pricing which remains very stable. 
+For price distribution by holiday, we presumed traffic would be higher
+on these days due to people travelling for the holiday and having time
+off. However, as seen in the violin plots and the bar plots above that
+was not the case. This may indicate that the pricing was changing
+slightly between cab-type segments on Lyft rides. However, Uber does
+remain very constant in its pricing regardless of holiday. The bar graph
+also shows the Lyft ride prices being more incremental than Uber ride
+pricing which remains very stable.
 
 **Figure 15: Comparing Cost of Rides on Holidays:**
 
@@ -590,7 +799,8 @@ normal_time_holiday_time_summary <- merged_data %>%
     median_price = median(price, na.rm = TRUE)
   )
 
-ggplot(data=normal_time_holiday_time_summary %>% filter(cab_type == "Lyft"), mapping =aes(x=hour, y=mean_price, color=holiday)) +
+ggplot(data=normal_time_holiday_time_summary %>% filter(cab_type == "Lyft"), 
+       mapping =aes(x=hour, y=mean_price, color=holiday)) +
 geom_line() +
 facet_wrap(~ cab_combo) +
 labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price") 
@@ -601,7 +811,11 @@ facet_wrap(~ cab_combo) +
 labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price")
 ```
 
-To further visualise the pricing of Uber and Lyft on holidays we plotted them on line graphs. This provides an additional visualization outside of the violin plots. It is clear from these plots that the prices remain stable with small peaks later in the days presumably around the evening rush hour period.
+To further visualise the pricing of Uber and Lyft on holidays we plotted
+them on line graphs. This provides an additional visualization outside
+of the violin plots. It is clear from these plots that the prices remain
+stable with small peaks later in the days presumably around the evening
+rush hour period.
 
 **Figure 16: Comparing Rush Hour Price for Weekdays to Price on Normal Weekends:**
 
@@ -616,7 +830,8 @@ rush_weekdays_normal_weekends_summary <- merged_data %>%
   )
 print(rush_weekdays_normal_weekends_summary)
 
-ggplot(data=rush_weekdays_normal_weekends_summary, mapping =aes(x=rush_hour, y=mean_price, fill=cab_combo)) +
+ggplot(data=rush_weekdays_normal_weekends_summary, 
+       mapping =aes(x=rush_hour, y=mean_price, fill=cab_combo)) +
 geom_bar(
   stat = "identity",
   position = "dodge") +
@@ -648,7 +863,13 @@ labs(title = "Uber - Comparing rush hour price for weekdays to price on normal w
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-In this EDA section we plotted the comparison of rush hour to weekdays and weekends on a bar plot and a heatmap categorized by cab-type. These plots demonstrates that the prices for rides remain steady across normal hours, morning rush and evening rush on both evenings and weekends. The consistency in the bar graph values and teh heatmap values further confirm the limited change in pricing across the varying rush hours on weekdays and weekends.
+In this EDA section we plotted the comparison of rush hour to weekdays
+and weekends on a bar plot and a heatmap categorized by cab-type. These
+plots demonstrates that the prices for rides remain steady across normal
+hours, morning rush and evening rush on both evenings and weekends. The
+consistency in the bar graph values and teh heatmap values further
+confirm the limited change in pricing across the varying rush hours on
+weekdays and weekends.
 
 **Figure 17: Price Distribution by Rush Hour:**
 
@@ -664,9 +885,15 @@ ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
   theme(legend.position = "none") 
 ```
 
-The following violin plot demonstrates the price distribution of Uber and Lyft apps during our three categorized rush hour periods. As can be seen in the plot the price remains very similar across all three rush hour periods. The wider sections of the violin plots in this EDA indicate that there are more rides at that price point. Both Uber and Lyft have very specific shapes that do not change as rush hour changes.
+The following violin plot demonstrates the price distribution of Uber
+and Lyft apps during our three categorized rush hour periods. As can be
+seen in the plot the price remains very similar across all three rush
+hour periods. The wider sections of the violin plots in this EDA
+indicate that there are more rides at that price point. Both Uber and
+Lyft have very specific shapes that do not change as rush hour changes.
 
-**Figure 18: Compare Cab Combo, Holiday and Uber & Lyft Surge Multiplier:**
+**Figure 18: Compare Cab Combo, Holiday and Uber & Lyft Surge
+Multiplier:**
 
 ```{r fig.width=8, fig.height=8}
 #Compare cab_combo, holiday and surge multiplier
@@ -690,9 +917,16 @@ labs(title = "Compare Cab Combo, Holiday & Surge Multiplier", x="Cab Type", y="S
   coord_flip() 
 ```
 
-Surge multiplier was highlighted in our earlier research questions but we did also briefly plot it here to test its influence in our third research question. Uber remains constant because there was no observed surge price in this collected dataset. You can see the surge prices for Uber and Lyft here but a bar plot was not the most ideal for comparing surge across cab combo and holiday which is why we pivoted to a heatmap as can be seen in the following plot.
+Surge multiplier was highlighted in our earlier research questions but
+we did also briefly plot it here to test its influence in our third
+research question. Uber remains constant because there was no observed
+surge price in this collected dataset. You can see the surge prices for
+Uber and Lyft here but a bar plot was not the most ideal for comparing
+surge across cab combo and holiday which is why we pivoted to a heatmap
+as can be seen in the following plot.
 
-**Figure 19: Lyft and Uber Compare Cab Combo, Holiday and Surge Multiplier:**
+**Figure 19: Lyft and Uber Compare Cab Combo, Holiday and Surge
+Multiplier:**
 
 ```{r fig.width=8, fig.height=8}
 ggplot(data=holiday_surge_summary %>% filter(cab_type == "Lyft"), 
@@ -714,7 +948,12 @@ labs(title = "Uber - Compare Cab Combo, Holiday and Surge Multiplier
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-Here you can see a more clear breakdown of our surge visualization. A heatmap for this data is more appropriate because it shows the distribution through the colours and numbers on the plot in a much cleaner presentation. As we can see from the values of the surge multiplier for Lyft surge doesn’t change significantly over holidays compared to non-holidays.
+Here you can see a more clear breakdown of our surge visualization. A
+heatmap for this data is more appropriate because it shows the
+distribution through the colours and numbers on the plot in a much
+cleaner presentation. As we can see from the values of the surge
+multiplier for Lyft surge doesn’t change significantly over holidays
+compared to non-holidays.
 
 **Figure 20: Compare Pricing on Weekday Holidays to Rush Hour Pricing:**
 
@@ -748,50 +987,153 @@ labs(title = "Compare pricing on weekday holidays to rush hour pricing
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-For our comparison of weekday holidays to rush hour we initially plotted a bar graph and then pivoted to a heatmap to better visualize the values. The prices over all Uber and Lyft rides during all three rush hour periods on holidays were very stable. There was a slight dip on the price of Lyft rides in the evenings of Hannukah, and a slight increase in price of Uber rides in the normal hours of Cyber Monday.
+For our comparison of weekday holidays to rush hour we initially plotted
+a bar graph and then pivoted to a heatmap to better visualize the
+values. The prices over all Uber and Lyft rides during all three rush
+hour periods on holidays were very stable. There was a slight dip on the
+price of Lyft rides in the evenings of Hannukah, and a slight increase
+in price of Uber rides in the normal hours of Cyber Monday.
 
-After completing our exploratory analyses we proceeded to create the models for each of our research questions. The information provided from our analysis helped us choose methods in an informed manner.
+After completing our exploratory analyses we proceeded to create the
+models for each of our research questions. The information provided from
+our analysis helped us choose methods in an informed manner.
 
 ## Methods
 
-**Research Question 1:** 
-To assess the effect of weather on ride price we used a Generalized Additive Model with a Gamma family and log link function. This model was chosen based on three characteristics of the response variable.
+**Research Question 1:** To assess the effect of weather on ride price
+we used a Generalized Additive Model with a Gamma family and log link
+function. This model was chosen based on three characteristics of the
+response variable.
 
-First, ride prices are strictly positive, which the Gamma distribution naturally accommodates. Second, the distribution of prices is right skewed with a concentration of rides at lower prices and a long tail of expensive rides from premium service tiers. The Gamma distribution handles this asymmetry well. Third, more expensive rides exhibit greater price variability, which is consistent with the Gamma assumption that variance is proportional to the squared mean.
+First, ride prices are strictly positive, which the Gamma distribution
+naturally accommodates. Second, the distribution of prices is right
+skewed with a concentration of rides at lower prices and a long tail of
+expensive rides from premium service tiers. The Gamma distribution
+handles this asymmetry well. Third, more expensive rides exhibit greater
+price variability, which is consistent with the Gamma assumption that
+variance is proportional to the squared mean.
 
-The log link ensures that predicted prices remain positive and that covariate effects act multiplicatively on the price scale. This is a natural interpretation for pricing data because a one unit change in temperature, for example, would scale the price by a constant percentage rather than adding a fixed dollar amount.
+The log link ensures that predicted prices remain positive and that
+covariate effects act multiplicatively on the price scale. This is a
+natural interpretation for pricing data because a one unit change in
+temperature, for example, would scale the price by a constant percentage
+rather than adding a fixed dollar amount.
 
-We used smooth functions for the six weather variables to allow for potentially non-linear relationships, while distance, cab type, service name, source, and destination entered as parametric terms. The basis dimensions were set to reflect the expected complexity of each relationship. Temperature was assigned k equals 8 because it had the widest range and the most potential for complex non-linearity. Clouds and pressure were assigned k equals 5 for moderate flexibility. Wind, humidity, and rain were each assigned k equals 4 because the data showed limited variability in these variables or, in the case of rain, very sparse observations. The effective degrees of freedom reported in the model output indicate how much of this flexibility the data actually require.
+We used smooth functions for the six weather variables to allow for
+potentially non-linear relationships, while distance, cab type, service
+name, source, and destination entered as parametric terms. The basis
+dimensions were set to reflect the expected complexity of each
+relationship. Temperature was assigned k equals 8 because it had the
+widest range and the most potential for complex non-linearity. Clouds
+and pressure were assigned k equals 5 for moderate flexibility. Wind,
+humidity, and rain were each assigned k equals 4 because the data showed
+limited variability in these variables or, in the case of rain, very
+sparse observations. The effective degrees of freedom reported in the
+model output indicate how much of this flexibility the data actually
+require.
 
-The model was fit using the bam function from the mgcv package (Wood, 2017), which is a computationally efficient version of gam designed for large datasets. We used fast REML for smoothing parameter estimation with the discrete option enabled to further accelerate computation. We also specified select equals TRUE, which adds an extra shrinkage penalty to each smooth term. This allows the model to shrink smooth terms to zero effective degrees of freedom if the data do not support their inclusion, providing a form of automatic variable selection for the weather covariates.
+The model was fit using the bam function from the mgcv package (Wood,
+2017), which is a computationally efficient version of gam designed for
+large datasets. We used fast REML for smoothing parameter estimation
+with the discrete option enabled to further accelerate computation. We
+also specified select equals TRUE, which adds an extra shrinkage penalty
+to each smooth term. This allows the model to shrink smooth terms to
+zero effective degrees of freedom if the data do not support their
+inclusion, providing a form of automatic variable selection for the
+weather covariates.
 
-The key assumptions of this model are that conditional on covariates, prices follow a Gamma distribution with a constant shape parameter, and that the smooth terms can adequately approximate the true underlying relationships. We also assume that observations are conditionally independent given the covariates. We acknowledge that repeated sampling of the same routes over time may introduce correlation, which is discussed further in the Limitations section.
+The key assumptions of this model are that conditional on covariates,
+prices follow a Gamma distribution with a constant shape parameter, and
+that the smooth terms can adequately approximate the true underlying
+relationships. We also assume that observations are conditionally
+independent given the covariates. We acknowledge that repeated sampling
+of the same routes over time may introduce correlation, which is
+discussed further in the Limitations section.
 
-**Research Question 2:** 
-To model factors associated with surge pricing we used a logistic regression with a binomial family and logit link, treating surge occurrence as a binary outcome. A ride was classified as having surge if the surge multiplier exceeded 1.0 and as not having surge otherwise. This binary approach was chosen because the surge multiplier in the Lyft data takes only a few discrete values, with the vast majority of observations at 1.0 or 1.25. The extreme rarity of higher surge levels made a continuous or ordinal model impractical.
+**Research Question 2:** To model factors associated with surge pricing
+we used a logistic regression with a binomial family and logit link,
+treating surge occurrence as a binary outcome. A ride was classified as
+having surge if the surge multiplier exceeded 1.0 and as not having
+surge otherwise. This binary approach was chosen because the surge
+multiplier in the Lyft data takes only a few discrete values, with the
+vast majority of observations at 1.0 or 1.25. The extreme rarity of
+higher surge levels made a continuous or ordinal model impractical.
 
-The model includes weather variables consisting of temperature, wind, humidity, cloud cover, pressure, and rain, as well as temporal variables including time period and day of week, pickup location, dropoff location, and service type as fixed effects. The time period was categorised into four bins: morning rush from 6am to 10am, midday from 10am to 4pm, evening rush from 4pm to 8pm, and night from 8pm to 6am.
+The model includes weather variables consisting of temperature, wind,
+humidity, cloud cover, pressure, and rain, as well as temporal variables
+including time period and day of week, pickup location, dropoff
+location, and service type as fixed effects. The time period was
+categorised into four bins: morning rush from 6am to 10am, midday from
+10am to 4pm, evening rush from 4pm to 8pm, and night from 8pm to 6am.
 
-As a robustness check we also fit a Generalized Linear Mixed Model with random intercepts for source and destination locations using the lme4 package (Bates et al., 2015). The purpose of this GLMM was to assess whether treating locations as random effects, which partially pools location level estimates and accounts for potential within location correlation, would change our conclusions about the weather and time predictors.
+As a robustness check we also fit a Generalized Linear Mixed Model with
+random intercepts for source and destination locations using the lme4
+package (Bates et al., 2015). The purpose of this GLMM was to assess
+whether treating locations as random effects, which partially pools
+location level estimates and accounts for potential within location
+correlation, would change our conclusions about the weather and time
+predictors.
 
-It is important to note that we do not use AIC or likelihood ratio tests to compare the GLM and GLMM directly. These two models use different likelihood formulations. The GLM maximises a conditional likelihood while the GLMM with Laplace approximation uses an approximate marginal likelihood that integrates over random effects. As discussed in the course materials, standard AIC is only valid for comparing GLMM variants when the goal is to account for correlation structures. Comparing across model classes requires conditional AIC, which is beyond the scope of this analysis. Instead, we evaluate the necessity of random effects by examining the estimated random effect variances, the consistency of fixed effect estimates between models, and the practical context of our grouping structure.
+It is important to note that we do not use AIC or likelihood ratio tests
+to compare the GLM and GLMM directly. These two models use different
+likelihood formulations. The GLM maximises a conditional likelihood
+while the GLMM with Laplace approximation uses an approximate marginal
+likelihood that integrates over random effects. As discussed in the
+course materials, standard AIC is only valid for comparing GLMM variants
+when the goal is to account for correlation structures. Comparing across
+model classes requires conditional AIC, which is beyond the scope of
+this analysis. Instead, we evaluate the necessity of random effects by
+examining the estimated random effect variances, the consistency of
+fixed effect estimates between models, and the practical context of our
+grouping structure.
 
-The assumptions of the logistic GLM include independent observations conditional on covariates and a linear relationship between covariates and the log odds of surge. The GLMM additionally assumes that random effects are normally distributed. Independence is approximate given the repeated measures nature of the data, but with large sample sizes per group this is unlikely to affect the direction of our conclusions.
+The assumptions of the logistic GLM include independent observations
+conditional on covariates and a linear relationship between covariates
+and the log odds of surge. The GLMM additionally assumes that random
+effects are normally distributed. Independence is approximate given the
+repeated measures nature of the data, but with large sample sizes per
+group this is unlikely to affect the direction of our conclusions.
 
-**Research Question 3:** 
-For research question three where we analysed different effects on cab prices we chose to use a GLM. Initially we had decided to compare a GLM and a GAM to see which one would perform best on the dataset. 
+**Research Question 3:** For research question three where we analysed
+different effects on cab prices we chose to use a GLM. Initially we had
+decided to compare a GLM and a GAM to see which one would perform best
+on the dataset.
 
-For the GAM, price was our response variable and the covariates used were: holiday, day of the week, hour, cab combo and surge multiplier. For our research question these were the covariates from our data that represented our model the best. For the covariate of hour we applied a smoothing function since it is continuous. The model distribution we used was Gamma with a log link. This was chosen to best fit the data of the response variable because it is positive and continuous, and the link function for Gamma distributions is the log link function this keeps the values positive (Kurui, 2025).
-For the GLM to remain consistent for our comparison price was also used as our response variable and maintained the same covariates. Gamma distribution was chosen for the response variable because price is positive and continuous and the log link function was also used again to ensure the values remained positive as required under a Gamma distribution (Kurui, 2025).  
+For the GAM, price was our response variable and the covariates used
+were: holiday, day of the week, hour, cab combo and surge multiplier.
+For our research question these were the covariates from our data that
+represented our model the best. For the covariate of hour we applied a
+smoothing function since it is continuous. The model distribution we
+used was Gamma with a log link. This was chosen to best fit the data of
+the response variable because it is positive and continuous, and the
+link function for Gamma distributions is the log link function this
+keeps the values positive (Kurui, 2025). For the GLM to remain
+consistent for our comparison price was also used as our response
+variable and maintained the same covariates. Gamma distribution was
+chosen for the response variable because price is positive and
+continuous and the log link function was also used again to ensure the
+values remained positive as required under a Gamma distribution (Kurui,
+2025).
 
-Assumptions of our GLM and GAM models include price being continuous, the data correctly represents the Uber and Lyft prices in Boston Massachusetts, relationship is assumed to be linear, distribution is positive continuous, measurements and observations are independent (Harrell, 2024). However we did have differing assumptions on the behaviour of the data as related to the GLM and GAM models themselves. In our GAM we assumed the data would present non-linearly, and with our GLM we assumed the data would present linearly.
+Assumptions of our GLM and GAM models include price being continuous,
+the data correctly represents the Uber and Lyft prices in Boston
+Massachusetts, relationship is assumed to be linear, distribution is
+positive continuous, measurements and observations are independent
+(Harrell, 2024). However we did have differing assumptions on the
+behaviour of the data as related to the GLM and GAM models themselves.
+In our GAM we assumed the data would present non-linearly, and with our
+GLM we assumed the data would present linearly.
 
-To evaluate the models we plotted the residuals of both the GAM and GLM to visualize how they fit the data and the variance and distribution of the data points. We used the pseudo r-squared McFadden values and k-fold cross validation to test the fit of our GLM. And for our GAM we used r-squared to assess deviance explained by the model and EDF to review the linearity of the model.
-
+To evaluate the models we plotted the residuals of both the GAM and GLM
+to visualize how they fit the data and the variance and distribution of
+the data points. We used the pseudo r-squared McFadden values and k-fold
+cross validation to test the fit of our GLM. And for our GAM we used
+r-squared to assess deviance explained by the model and EDF to review
+the linearity of the model.
 
 ## Analysis
 
-### Research Question #1 
+### Research Question #1
 
 ```{r}
 gam_model <- bam(
@@ -836,7 +1178,7 @@ cat("Adjusted R-squared:", summary(gam_model)$r.sq, "\n")
 cat("Deviance explained:", round(summary(gam_model)$dev.expl * 100, 2), "%\n")
 ```
 
-### Research Question #2 
+### Research Question #2
 
 ```{r}
 glm_surge <- glm(
@@ -898,8 +1240,10 @@ print(comparison_df, row.names = FALSE)
 cat("\n=== Contextual Justification ===\n")
 cat("Number of source locations:", length(unique(lyft_df$source)), "\n")
 cat("Number of destination locations:", length(unique(lyft_df$destination)), "\n")
-cat("Average rides per source:", round(nrow(lyft_df) / length(unique(lyft_df$source))), "\n")
-cat("Average rides per destination:", round(nrow(lyft_df) / length(unique(lyft_df$destination))), "\n")
+cat("Average rides per source:", 
+    round(nrow(lyft_df) / length(unique(lyft_df$source))), "\n")
+cat("Average rides per destination:", 
+    round(nrow(lyft_df) / length(unique(lyft_df$destination))), "\n")
 ```
 
 ```{r}
@@ -963,11 +1307,12 @@ ggplot(bin_df, aes(x = avg_fitted, y = avg_resid)) +
   theme_minimal()
 ```
 
-### Research Question #3 
+### Research Question #3
 
 ```{r fig.width=8, fig.height=8}
 #Figure 25: Residuals Plots - Modelling GAM
-gam_model_price <- gam(price ~ holiday + day_of_the_week + s(hour) + cab_combo + surge_multiplier,
+gam_model_price <- gam(price ~ holiday + day_of_the_week + s(hour) + 
+                         cab_combo + surge_multiplier,
                       data = merged_data,
                       family = Gamma(link = "log"))
 summary(gam_model_price)
@@ -977,7 +1322,8 @@ draw(gam_model_price)
 
 ```{r fig.width=8, fig.height=8}
 # Figure 26: Residuals Plots - Modelling GLM
-glm_model_price <- glm(price ~ holiday + day_of_the_week + hour + cab_combo + surge_multiplier,
+glm_model_price <- glm(price ~ holiday + day_of_the_week + hour + 
+                         cab_combo + surge_multiplier,
                       data = merged_data,
                       family = Gamma(link = "log"))
 summary(glm_model_price)
@@ -990,7 +1336,8 @@ PseudoR2(glm_model_price, which = NULL)
 set.seed(42)
 train_control <- trainControl(method = "cv", number = 10)
 
-glm_kfold <- train(price ~ holiday + day_of_the_week + hour + cab_combo + surge_multiplier,
+glm_kfold <- train(price ~ holiday + day_of_the_week + hour + 
+                     cab_combo + surge_multiplier,
                       data = merged_data,
                       method="glm",
                       family = Gamma(link = "log"),
@@ -1002,176 +1349,447 @@ print(glm_kfold)
 
 **Research Question 1:**
 
-The GAM explained approximately 92 percent of the deviance in ride prices, with an adjusted R squared of approximately 0.90. The dominant predictors were distance, cab type, and service name rather than weather conditions. The model was fit with the select equals TRUE option in bam, which adds an extra shrinkage penalty to each smooth term. This penalty allows the model to effectively remove smooths that do not contribute meaningfully, providing automatic variable selection on the weather terms rather than relying on manual inspection of p values.
- 
-**Figure 21: Estimated Smooth Effects of Weather Variables on Log(Price):**
- 
-Figure 21 displays the estimated smooth effects for each of the six weather variables on the log price scale, with dashed lines representing 95 percent confidence intervals and rug marks showing the distribution of observed values. Among the weather smooth terms, cloud cover reached high statistical significance with a p value of 0.0009 and an effective degrees of freedom of approximately 1.89, indicating a modest non-linear relationship with price. Atmospheric pressure was also statistically significant with a p value of 0.017 and an effective degrees of freedom of approximately 1.59. The remaining four weather variables were effectively shrunk to zero by the selection penalty. Temperature had an effective degrees of freedom of 0.05 with a p value of 0.42, while wind, humidity, and rain all had effective degrees of freedom below 0.1 and non-significant p values. This confirms that only cloud cover and pressure contribute to the model, while the other weather variables have no detectable influence on price after controlling for structural covariates. The practical magnitude of even the two significant effects was small. The smooth curves varied by less than 0.005 on the log price scale, translating to price differences of roughly 5 percent or less across the observed range of each variable.
- 
+The GAM explained approximately 92 percent of the deviance in ride
+prices, with an adjusted R squared of approximately 0.90. The dominant
+predictors were distance, cab type, and service name rather than weather
+conditions. The model was fit with the select equals TRUE option in bam,
+which adds an extra shrinkage penalty to each smooth term. This penalty
+allows the model to effectively remove smooths that do not contribute
+meaningfully, providing automatic variable selection on the weather
+terms rather than relying on manual inspection of p values.
+
+**Figure 21: Estimated Smooth Effects of Weather Variables on
+Log(Price):**
+
+Figure 21 displays the estimated smooth effects for each of the six
+weather variables on the log price scale, with dashed lines representing
+95 percent confidence intervals and rug marks showing the distribution
+of observed values. Among the weather smooth terms, cloud cover reached
+high statistical significance with a p value of 0.0009 and an effective
+degrees of freedom of approximately 1.89, indicating a modest non-linear
+relationship with price. Atmospheric pressure was also statistically
+significant with a p value of 0.017 and an effective degrees of freedom
+of approximately 1.59. The remaining four weather variables were
+effectively shrunk to zero by the selection penalty. Temperature had an
+effective degrees of freedom of 0.05 with a p value of 0.42, while wind,
+humidity, and rain all had effective degrees of freedom below 0.1 and
+non-significant p values. This confirms that only cloud cover and
+pressure contribute to the model, while the other weather variables have
+no detectable influence on price after controlling for structural
+covariates. The practical magnitude of even the two significant effects
+was small. The smooth curves varied by less than 0.005 on the log price
+scale, translating to price differences of roughly 5 percent or less
+across the observed range of each variable.
+
 **Figure 22: GAM Diagnostic Plots:**
- 
-Figure 22 presents the standard GAM diagnostic checks. The QQ plot of deviance residuals in the top left panel was approximately linear, indicating that the Gamma distribution assumption was reasonable. The residuals versus linear predictor plot in the top right panel showed no strong systematic patterns, suggesting that the model adequately captured the relationship between covariates and price. The histogram of residuals in the bottom left panel confirmed an approximately symmetric distribution centred near zero. The response versus fitted plot in the bottom right panel demonstrated that the model captured the general price structure well, with points clustering around the diagonal. Overall, the Gamma family handled the skewed distribution appropriately and the diagnostics did not reveal major model misspecification.
- 
-In summary, only cloud cover and atmospheric pressure showed statistically significant effects on ride prices among the six weather variables, and the select equals TRUE option in bam confirmed that the other four variables could be effectively removed from the model. Even the two significant effects were practically negligible compared to structural factors such as distance, service type, and route. This suggests that during the observed period, the pricing algorithms of both Uber and Lyft were not meaningfully influenced by weather conditions.
+
+Figure 22 presents the standard GAM diagnostic checks. The QQ plot of
+deviance residuals in the top left panel was approximately linear,
+indicating that the Gamma distribution assumption was reasonable. The
+residuals versus linear predictor plot in the top right panel showed no
+strong systematic patterns, suggesting that the model adequately
+captured the relationship between covariates and price. The histogram of
+residuals in the bottom left panel confirmed an approximately symmetric
+distribution centred near zero. The response versus fitted plot in the
+bottom right panel demonstrated that the model captured the general
+price structure well, with points clustering around the diagonal.
+Overall, the Gamma family handled the skewed distribution appropriately
+and the diagnostics did not reveal major model misspecification.
+
+In summary, only cloud cover and atmospheric pressure showed
+statistically significant effects on ride prices among the six weather
+variables, and the select equals TRUE option in bam confirmed that the
+other four variables could be effectively removed from the model. Even
+the two significant effects were practically negligible compared to
+structural factors such as distance, service type, and route. This
+suggests that during the observed period, the pricing algorithms of both
+Uber and Lyft were not meaningfully influenced by weather conditions.
 
 **Research Question 2:**
 
-The McFadden pseudo R squared for the logistic GLM was 0.045. While this may appear low, pseudo R squared values for logistic regression are not directly comparable to OLS R squared. McFadden (1979) noted that values between 0.2 and 0.4 represent excellent fit in discrete choice models. A value of 0.045 is common for models predicting rare events, as the baseline rate of surge occurrence was only 8.2 percent. The model's value lies in identifying which predictors are associated with surge rather than in predicting individual ride outcomes.
- 
-The analysis of deviance showed that pickup location was by far the strongest predictor of Lyft surge pricing, contributing a deviance reduction greater than all other predictors combined. Destination contributed a deviance reduction of approximately 32, and time period contributed approximately 12.5. Among the weather variables, only atmospheric pressure reached statistical significance with a deviance reduction of approximately 6, though even this effect was small in practical terms.
- 
-One notable finding involved service type. After excluding Shared rides, the service type variable contributed exactly zero deviance to the model. This means that Lyft applies the surge multiplier uniformly across all remaining service tiers. Whether a rider orders a regular Lyft, Lyft XL, Lux, or Lux Black, the same surge multiplier applies. Surge is therefore a platform level decision based on location and time rather than a service level decision.
- 
+The McFadden pseudo R squared for the logistic GLM was 0.045. While this
+may appear low, pseudo R squared values for logistic regression are not
+directly comparable to OLS R squared. McFadden (1979) noted that values
+between 0.2 and 0.4 represent excellent fit in discrete choice models. A
+value of 0.045 is common for models predicting rare events, as the
+baseline rate of surge occurrence was only 8.2 percent. The model's
+value lies in identifying which predictors are associated with surge
+rather than in predicting individual ride outcomes.
+
+The analysis of deviance showed that pickup location was by far the
+strongest predictor of Lyft surge pricing, contributing a deviance
+reduction greater than all other predictors combined. Destination
+contributed a deviance reduction of approximately 32, and time period
+contributed approximately 12.5. Among the weather variables, only
+atmospheric pressure reached statistical significance with a deviance
+reduction of approximately 6, though even this effect was small in
+practical terms.
+
+One notable finding involved service type. After excluding Shared rides,
+the service type variable contributed exactly zero deviance to the
+model. This means that Lyft applies the surge multiplier uniformly
+across all remaining service tiers. Whether a rider orders a regular
+Lyft, Lyft XL, Lux, or Lux Black, the same surge multiplier applies.
+Surge is therefore a platform level decision based on location and time
+rather than a service level decision.
+
 **Figure 23: Odds Ratios for Surge Occurrence (GLM):**
- 
-Figure # displays the odds ratios with 95 percent confidence intervals for the weather and time fixed effects from the GLM. Values greater than 1.0 indicate higher surge probability while the dashed line at 1.0 represents no effect. The odds ratios for weather variables all clustered tightly around 1.0, confirming negligible effects. Morning rush had an odds ratio of approximately 1.08 compared to midday, meaning surge odds were about 8 percent higher during morning commute hours. Evening rush and night showed similar but slightly smaller elevations. Rain had an odds ratio near 1.0 but with an extremely wide confidence interval because the vast majority of observations had zero rainfall. The model simply did not have enough rainy rides to estimate the effect of rain with any precision.
- 
+
+Figure \# displays the odds ratios with 95 percent confidence intervals
+for the weather and time fixed effects from the GLM. Values greater than
+1.0 indicate higher surge probability while the dashed line at 1.0
+represents no effect. The odds ratios for weather variables all
+clustered tightly around 1.0, confirming negligible effects. Morning
+rush had an odds ratio of approximately 1.08 compared to midday, meaning
+surge odds were about 8 percent higher during morning commute hours.
+Evening rush and night showed similar but slightly smaller elevations.
+Rain had an odds ratio near 1.0 but with an extremely wide confidence
+interval because the vast majority of observations had zero rainfall.
+The model simply did not have enough rainy rides to estimate the effect
+of rain with any precision.
+
 **Figure 24: Binned Residual Plot (GLM):**
- 
-Figure # shows the binned residual plot for the logistic GLM, which is the standard diagnostic for binary response models. The plot divides the fitted probabilities into 40 bins and displays the average residual within each bin, with grey bands indicating approximate 95 percent confidence bounds. The majority of points fell within the expected bounds, indicating that the model fit was adequate overall. There were a few points near the higher fitted probability range that approached or slightly exceeded the bounds, suggesting the model may slightly underperform for rides with high predicted surge probability. However, the overall pattern did not indicate serious model misspecification.
- 
-For the GLMM robustness check, the random intercept for source had a standard deviation of 0.73 on the logit scale, confirming that substantial variation exists between pickup locations in terms of surge probability. This is consistent with the GLM finding that pickup location is the dominant predictor. The destination random intercept was near zero with a standard deviation of 0.04, indicating that the fixed effect dummy variables already fully capture destination level variation.
- 
-The critical result of the robustness check is the consistency of the fixed effect estimates across the two models. All weather and time coefficients differed by less than 0.001 on the logit scale between the GLM and GLMM. This confirms that regardless of whether location is treated as a fixed or random effect, the conclusions about weather and time are virtually identical. With only 12 unique locations per grouping variable and over 21,000 observations per group, fixed effects can reliably estimate each location's contribution without requiring the shrinkage that random effects provide (Bolker et al., 2009; Gelman and Hill, 2007).
- 
-These results did not support our hypothesis. Surge pricing is not primarily driven by temporal factors or weather. Instead, it is dominated by pickup location. The practical implication is that a rider's chances of encountering surge depend far more on where they ride than on when they ride or what the weather is doing.
+
+Figure \# shows the binned residual plot for the logistic GLM, which is
+the standard diagnostic for binary response models. The plot divides the
+fitted probabilities into 40 bins and displays the average residual
+within each bin, with grey bands indicating approximate 95 percent
+confidence bounds. The majority of points fell within the expected
+bounds, indicating that the model fit was adequate overall. There were a
+few points near the higher fitted probability range that approached or
+slightly exceeded the bounds, suggesting the model may slightly
+underperform for rides with high predicted surge probability. However,
+the overall pattern did not indicate serious model misspecification.
+
+For the GLMM robustness check, the random intercept for source had a
+standard deviation of 0.73 on the logit scale, confirming that
+substantial variation exists between pickup locations in terms of surge
+probability. This is consistent with the GLM finding that pickup
+location is the dominant predictor. The destination random intercept was
+near zero with a standard deviation of 0.04, indicating that the fixed
+effect dummy variables already fully capture destination level
+variation.
+
+The critical result of the robustness check is the consistency of the
+fixed effect estimates across the two models. All weather and time
+coefficients differed by less than 0.001 on the logit scale between the
+GLM and GLMM. This confirms that regardless of whether location is
+treated as a fixed or random effect, the conclusions about weather and
+time are virtually identical. With only 12 unique locations per grouping
+variable and over 21,000 observations per group, fixed effects can
+reliably estimate each location's contribution without requiring the
+shrinkage that random effects provide (Bolker et al., 2009; Gelman and
+Hill, 2007).
+
+These results did not support our hypothesis. Surge pricing is not
+primarily driven by temporal factors or weather. Instead, it is
+dominated by pickup location. The practical implication is that a
+rider's chances of encountering surge depend far more on where they ride
+than on when they ride or what the weather is doing.
 
 **Research Question 3:**
 
 **Data Summary Results GAM:**
 
-The data summary of the GAM indicates that cab combo is the most significant covariate alongside surge multiplier. The EDF for the GAM is 2.5 which does indicate a degree of non-linearity, the baseline for linear being one. Our r-squared values also indicate that the GAM accounts for 81.6% of the deviance apparent in the model.
+The data summary of the GAM indicates that cab combo is the most
+significant covariate alongside surge multiplier. The EDF for the GAM is
+2.5 which does indicate a degree of non-linearity, the baseline for
+linear being one. Our r-squared values also indicate that the GAM
+accounts for 81.6% of the deviance apparent in the model.
 
 **Figure 25: Residuals Plots:**
 
-The residual plots for our GAM give helpful insights into the model behaviour. The QQ Plot indicates that the model struggles at higher price values, this can be seen through the plot fitting the line well at the lower and middle values but curving upwards as the values increase. The residuals vs. Linear Predictor Plot and the Observed vs. Fitted Values Plot both have extreme banding. This we predict is due to how influential cab combo is on the price of Uber and Lyft ride prices. The bands on the Linear Predictor Plot do hover around zero however they peak in certain areas which indicates that the model is underestimating on certain high price rides. The observed vs. Fitted Values plot indicates there is variance being missed by the model. As described above the model accounts for 81.6% of the variance but there is still some that is not accounted for in this analysis. These gaps could be from covariates which were not included in the model for this research question. The Histogram of the Residuals is slightly right skewed as well which indicates that the mean is higher than the median, leading us to the conclusion we also drew from the QQ Plot which is that the model struggles predicting at higher price points.
+The residual plots for our GAM give helpful insights into the model
+behaviour. The QQ Plot indicates that the model struggles at higher
+price values, this can be seen through the plot fitting the line well at
+the lower and middle values but curving upwards as the values increase.
+The residuals vs. Linear Predictor Plot and the Observed vs. Fitted
+Values Plot both have extreme banding. This we predict is due to how
+influential cab combo is on the price of Uber and Lyft ride prices. The
+bands on the Linear Predictor Plot do hover around zero however they
+peak in certain areas which indicates that the model is underestimating
+on certain high price rides. The observed vs. Fitted Values plot
+indicates there is variance being missed by the model. As described
+above the model accounts for 81.6% of the variance but there is still
+some that is not accounted for in this analysis. These gaps could be
+from covariates which were not included in the model for this research
+question. The Histogram of the Residuals is slightly right skewed as
+well which indicates that the mean is higher than the median, leading us
+to the conclusion we also drew from the QQ Plot which is that the model
+struggles predicting at higher price points.
 
 **Data Summary Results GLM:**
 
-Our GLM summary indicated that cab combo and surge multiplier are the most significant covariates for this model. The McFadden r-squared value we calculated is a 0.2469 which according to Stack Exchange applications of this function indicate a strong model fit (Reichenbach, 2014). 
+Our GLM summary indicated that cab combo and surge multiplier are the
+most significant covariates for this model. The McFadden r-squared value
+we calculated is a 0.2469 which according to Stack Exchange applications
+of this function indicate a strong model fit (Reichenbach, 2014).
 
-**Figure 26: Residuals Plots:** 
+**Figure 26: Residuals Plots:**
 
-The residual plots for our GLM are very similar to the residual plots of our GAM. Since there was not a significant difference in the model construction and there was only one continuous variable that was smoothed the plots are nearly identical. Which means the model for GLM also struggles as prices of rides increase as can be seen in the upwards curve of the QQ Plot. There are large variances in the Residuals vs. Linear Predictor Plot which indicate the model is underestimating the values of prices. The Observed vs. Fitted Values Plot indicates that there is quite a variance between the observed and predicted values. Since the GLM model also doesn’t account for all of the deviance it is likely that there are influences from other covariates in our dataset that are not taken into account for this question in particular. Finally, our histogram for the GLM is also positive right-skewed which indicates that the model is underfitting on the higher prices which is another confirmation for our observations above.
+The residual plots for our GLM are very similar to the residual plots of
+our GAM. Since there was not a significant difference in the model
+construction and there was only one continuous variable that was
+smoothed the plots are nearly identical. Which means the model for GLM
+also struggles as prices of rides increase as can be seen in the upwards
+curve of the QQ Plot. There are large variances in the Residuals vs.
+Linear Predictor Plot which indicate the model is underestimating the
+values of prices. The Observed vs. Fitted Values Plot indicates that
+there is quite a variance between the observed and predicted values.
+Since the GLM model also doesn’t account for all of the deviance it is
+likely that there are influences from other covariates in our dataset
+that are not taken into account for this question in particular.
+Finally, our histogram for the GLM is also positive right-skewed which
+indicates that the model is underfitting on the higher prices which is
+another confirmation for our observations above.
 
 **K-Fold Cross Validation:**
 
-To confirm this model we used k-fold cross validation with 10 folds. This was to further confirm the validity of the model by testing it against itself through withholding data. Withholding data for cross validation testing helps us maximize our dataset by training the model on some of our data and withholding the rest for validating the model performance on unseen data. The outcome of our k-fold cross validation was an RMSE of 3.98, r-squared of 81.75%, and an MAE of 2.95. The RMSE indicates that our model observed and fitted values were off on average by 3.98 dollars. Our r-squared score was 81.75%, which indicates how well the model performed on the validation set. And our MAE of 2.95 is the average difference between our price values (Farshad, 2024).
+To confirm this model we used k-fold cross validation with 10 folds.
+This was to further confirm the validity of the model by testing it
+against itself through withholding data. Withholding data for cross
+validation testing helps us maximize our dataset by training the model
+on some of our data and withholding the rest for validating the model
+performance on unseen data. The outcome of our k-fold cross validation
+was an RMSE of 3.98, r-squared of 81.75%, and an MAE of 2.95. The RMSE
+indicates that our model observed and fitted values were off on average
+by 3.98 dollars. Our r-squared score was 81.75%, which indicates how
+well the model performed on the validation set. And our MAE of 2.95 is
+the average difference between our price values (Farshad, 2024).
 
 **Choosing GLM:**
 
-We used both models to analyse the data prior to deciding on a singular model, but ultimately we chose the GLM. Prior to editing our analysis we had compared the GLM and GAM using AIC, which was not an accurate comparison since different models are not directly comparable. After reviewing the code and our analysis we looked at our existing code summaries and model covariates practically. There was only one continuous covariate in our model (hour), and although the EDF in the GAM was 2.5 indicating non-linearity hour is not significant enough to warrant keeping the GAM.  As discussed in the course it makes sense to choose the more simple model in situations like these when results and performance are similar. 
+We used both models to analyse the data prior to deciding on a singular
+model, but ultimately we chose the GLM. Prior to editing our analysis we
+had compared the GLM and GAM using AIC, which was not an accurate
+comparison since different models are not directly comparable. After
+reviewing the code and our analysis we looked at our existing code
+summaries and model covariates practically. There was only one
+continuous covariate in our model (hour), and although the EDF in the
+GAM was 2.5 indicating non-linearity hour is not significant enough to
+warrant keeping the GAM. As discussed in the course it makes sense to
+choose the more simple model in situations like these when results and
+performance are similar.
 
 ## Conclusion:
 
-Our analysis of the Uber and Lyft pricing dataset by Munde led us to draw new conclusions and confirmed parts of our initial hypotheses. 
+Our analysis of the Uber and Lyft pricing dataset by Munde led us to
+draw new conclusions and confirmed parts of our initial hypotheses.
 
 **Research Question 1:**
 
-For our first research question we found that weather conditions have almost no practical effect on ride prices. After controlling for distance, cab type, and route, the GAM with the select equals TRUE shrinkage penalty identified only two weather variables as contributing to the model. Cloud cover was highly significant with a p value of 0.0009 and pressure was significant with a p value of 0.017. The remaining four variables, temperature, wind, humidity, and rain, were effectively shrunk to zero by the penalty, with effective degrees of freedom near zero and non-significant p values. Even for cloud cover and pressure, the practical magnitude was minimal, with the smooth curves varying by less than 0.005 on the log price scale. This is the opposite of what we predicted in our hypothesis, which was that adverse weather would lead to meaningful price increases. The data suggest that during this observation period, weather did not play a substantial role in the pricing algorithms of either platform.
+For our first research question we found that weather conditions have
+almost no practical effect on ride prices. After controlling for
+distance, cab type, and route, the GAM with the select equals TRUE
+shrinkage penalty identified only two weather variables as contributing
+to the model. Cloud cover was highly significant with a p value of
+0.0009 and pressure was significant with a p value of 0.017. The
+remaining four variables, temperature, wind, humidity, and rain, were
+effectively shrunk to zero by the penalty, with effective degrees of
+freedom near zero and non-significant p values. Even for cloud cover and
+pressure, the practical magnitude was minimal, with the smooth curves
+varying by less than 0.005 on the log price scale. This is the opposite
+of what we predicted in our hypothesis, which was that adverse weather
+would lead to meaningful price increases. The data suggest that during
+this observation period, weather did not play a substantial role in the
+pricing algorithms of either platform.
 
 **Research Question 2:**
 
-Our findings for our second research question indicated that surge pricing is predominantly driven by pickup location, with time of day playing a secondary role. Weather conditions showed no meaningful association with surge occurrence. We initially hypothesized that surge would be primarily influenced by weather and rush hour patterns rather than by location alone, but the data clearly indicated otherwise. The GLMM robustness check confirmed these findings. Although the source random effect captured non-trivial between location variance, all weather and time coefficients remained virtually identical across the GLM and GLMM. This stability demonstrates that our conclusions are robust to the choice of how location is modelled. With only 12 locations and over 21,000 observations per group, fixed effects provide reliable estimates without requiring random effects. 
+Our findings for our second research question indicated that surge
+pricing is predominantly driven by pickup location, with time of day
+playing a secondary role. Weather conditions showed no meaningful
+association with surge occurrence. We initially hypothesized that surge
+would be primarily influenced by weather and rush hour patterns rather
+than by location alone, but the data clearly indicated otherwise. The
+GLMM robustness check confirmed these findings. Although the source
+random effect captured non-trivial between location variance, all
+weather and time coefficients remained virtually identical across the
+GLM and GLMM. This stability demonstrates that our conclusions are
+robust to the choice of how location is modelled. With only 12 locations
+and over 21,000 observations per group, fixed effects provide reliable
+estimates without requiring random effects.
 
 **Research Question 3:**
 
-Our third and final analysis led us to the conclusion that cab combo and surge multiplier are the primary influences on ride pricing for both Uber and Lyft. Surge multiplier was analysed more deeply in our second research question but in question three we did determine its strong significance. This does align with part of our initial hypothesis where we hypothesized cab combo would be the primary influence on price. However, in our hypothesis we had also predicted that rush hour, holiday and day of the week would be significant influences on price but that was not what our findings returned. The GLM was successful in representing the analysis of our dataset as can be confirmed by our EDA and our model validation through k-fold cross validation which yielded an r-squared value of 81.75%.
+Our third and final analysis led us to the conclusion that cab combo and
+surge multiplier are the primary influences on ride pricing for both
+Uber and Lyft. Surge multiplier was analysed more deeply in our second
+research question but in question three we did determine its strong
+significance. This does align with part of our initial hypothesis where
+we hypothesized cab combo would be the primary influence on price.
+However, in our hypothesis we had also predicted that rush hour, holiday
+and day of the week would be significant influences on price but that
+was not what our findings returned. The GLM was successful in
+representing the analysis of our dataset as can be confirmed by our EDA
+and our model validation through k-fold cross validation which yielded
+an r-squared value of 81.75%.
 
 ## Limitations:
 
-Several limitations should be considered when interpreting these results. The most significant is the narrow observation window. The dataset covers only 23 days from late November to mid December 2018, with temperatures ranging from approximately 20 to 55 degrees Fahrenheit. This window does not include extreme weather events such as blizzards, ice storms, or heat waves. It is plausible that weather effects on price and surge would emerge under more extreme conditions that our data does not contain.
+Several limitations should be considered when interpreting these
+results. The most significant is the narrow observation window. The
+dataset covers only 23 days from late November to mid December 2018,
+with temperatures ranging from approximately 20 to 55 degrees
+Fahrenheit. This window does not include extreme weather events such as
+blizzards, ice storms, or heat waves. It is plausible that weather
+effects on price and surge would emerge under more extreme conditions
+that our data does not contain.
 
-The absence of Uber surge data is another important limitation. Because the API always returned a surge multiplier of 1.0 for Uber rides, we cannot make any claims about Uber's surge behaviour. Our surge findings apply only to Lyft.
-The binary coding of surge discards information about surge magnitude. A ride with a 1.25 multiplier and a ride with a 3.0 multiplier are treated identically. An ordinal or continuous model could in principle recover this information, but the extreme rarity of high surge levels in our data made such models infeasible.
+The absence of Uber surge data is another important limitation. Because
+the API always returned a surge multiplier of 1.0 for Uber rides, we
+cannot make any claims about Uber's surge behaviour. Our surge findings
+apply only to Lyft. The binary coding of surge discards information
+about surge magnitude. A ride with a 1.25 multiplier and a ride with a
+3.0 multiplier are treated identically. An ordinal or continuous model
+could in principle recover this information, but the extreme rarity of
+high surge levels in our data made such models infeasible.
 
-The rain variable presents a particular challenge. With 59 percent of missing values replaced by zero, our estimate of rain's effect is likely conservative. The wide confidence interval on rain's odds ratio in the surge model reflects this uncertainty.
-Rides in this dataset are not fully independent. The same routes are sampled repeatedly across the 23 day period, and rides at nearby times likely share similar conditions. Neither the GAM nor the GLM explicitly accounts for this temporal or spatial correlation. While this is unlikely to change the direction of our findings, it may affect the precision of the standard errors.
+The rain variable presents a particular challenge. With 59 percent of
+missing values replaced by zero, our estimate of rain's effect is likely
+conservative. The wide confidence interval on rain's odds ratio in the
+surge model reflects this uncertainty. Rides in this dataset are not
+fully independent. The same routes are sampled repeatedly across the 23
+day period, and rides at nearby times likely share similar conditions.
+Neither the GAM nor the GLM explicitly accounts for this temporal or
+spatial correlation. While this is unlikely to change the direction of
+our findings, it may affect the precision of the standard errors.
 
-Since the timeframe for the data collection was limited to only 23 days, we believe assumptions may have been made about data points in the construction of the dataset. Something that indicates this limitation to us is the fact that all cab combo categories have very similar amounts of data. If this was simulated or the data was filtered out in construction of the dataset it could have an impact on our final conclusions.
+Since the timeframe for the data collection was limited to only 23 days,
+we believe assumptions may have been made about data points in the
+construction of the dataset. Something that indicates this limitation to
+us is the fact that all cab combo categories have very similar amounts
+of data. If this was simulated or the data was filtered out in
+construction of the dataset it could have an impact on our final
+conclusions.
 
-The dataset locations are limited to areas of Boston Massachusetts which limits the broader application of our conclusions. Since Uber and Lyft are used in many regions there may be different influences on pricing and surge multiplier in those regions that we were not able to analyse.
+The dataset locations are limited to areas of Boston Massachusetts which
+limits the broader application of our conclusions. Since Uber and Lyft
+are used in many regions there may be different influences on pricing
+and surge multiplier in those regions that we were not able to analyse.
 
-Looking ahead, as more data is made public on Uber and Lyft ride hailing services in different cities and at different times of the year we believe that it would be interesting to further analyse how these factors influence ride-hailing pricing. 
+Looking ahead, as more data is made public on Uber and Lyft ride hailing
+services in different cities and at different times of the year we
+believe that it would be interesting to further analyse how these
+factors influence ride-hailing pricing.
 
-We would also like to acknowledge that due to time constraints and the scope of the project requirements our analysis may not cover all insights obtainable from this dataset. 
+We would also like to acknowledge that due to time constraints and the
+scope of the project requirements our analysis may not cover all
+insights obtainable from this dataset.
 
 ## References
 
-Anthropic. (2026). Claude (claude-sonnet-4-6) [Large language model]. https://claude.ai
+Anthropic. (2026). Claude (claude-sonnet-4-6) [Large language model].
+<https://claude.ai>
 
-Atlassian. (n.d.). A complete guide to violin plots. Atlassian. 
-https://www.atlassian.com/data/charts/violin-plot-complete-guide
+Atlassian. (n.d.). A complete guide to violin plots. Atlassian.
+<https://www.atlassian.com/data/charts/violin-plot-complete-guide>
 
-Bates, D., Mächler, M., Bolker, B., & Walker, S. (2015). Fitting linear mixed-effects models using lme4. Journal of Statistical Software, 67(1), 1–48. https://doi.org/10.18637/jss.v067.i01
+Bates, D., Mächler, M., Bolker, B., & Walker, S. (2015). Fitting linear
+mixed-effects models using lme4. Journal of Statistical Software, 67(1),
+1–48. <https://doi.org/10.18637/jss.v067.i01>
 
-Bolker, B. M., Brooks, M. E., Clark, C. J., Geange, S. W., Poulsen, J. R., Stevens, M. H. H., & White, J.-S. S. (2009). Generalized linear mixed models: a practical guide for ecology and evolution. Trends in Ecology & Evolution, 24(3), 127–135. https://doi.org/10.1016/j.tree.2008.10.008
+Bolker, B. M., Brooks, M. E., Clark, C. J., Geange, S. W., Poulsen, J.
+R., Stevens, M. H. H., & White, J.-S. S. (2009). Generalized linear
+mixed models: a practical guide for ecology and evolution. Trends in
+Ecology & Evolution, 24(3), 127–135.
+<https://doi.org/10.1016/j.tree.2008.10.008>
 
-Castillo, J. C., Knoepfle, D., & Weyl, G. (2017). Surge Pricing Solves the Wild Goose Chase. Proceedings of the 2017 ACM Conference on Economics and Computation. https://doi.org/10.1145/3033274.3085098
+Castillo, J. C., Knoepfle, D., & Weyl, G. (2017). Surge Pricing Solves
+the Wild Goose Chase. Proceedings of the 2017 ACM Conference on
+Economics and Computation. <https://doi.org/10.1145/3033274.3085098>
 
-CRAN. (n.d.). Getting started with gratia. CRAN. 
-https://cran.r-project.org/web/packages/gratia/vignettes/gratia.html
+CRAN. (n.d.). Getting started with gratia. CRAN.
+<https://cran.r-project.org/web/packages/gratia/vignettes/gratia.html>
 
-Farshad, K. (2024). Essential Regression Evaluation Metrics: MSE, RMSE, MAE, R², and Adjusted 
-R². Medium. https://farshadabdulazeez.medium.com/essential-regression-evaluation-metrics-mse-rmse-mae-r%C2%B2-and-adjusted-r%C2%B2-0600daa1c03a
+Farshad, K. (2024). Essential Regression Evaluation Metrics: MSE, RMSE,
+MAE, R², and Adjusted R². Medium.
+<https://farshadabdulazeez.medium.com/essential-regression-evaluation-metrics-mse-rmse-mae-r%C2%B2-and-adjusted-r%C2%B2-0600daa1c03a>
 
-Finnstats. (2021). Adding text labels to ggplot2 bar chart. R-Bloggers. 
-https://www.r-bloggers.com/2021/09/adding-text-labels-to-ggplot2-bar-chart-2/
+Finnstats. (2021). Adding text labels to ggplot2 bar chart. R-Bloggers.
+<https://www.r-bloggers.com/2021/09/adding-text-labels-to-ggplot2-bar-chart-2/>
 
-Gelman, A. and Hill, J. (2007). Data Analysis Using Regression and Multilevel/Hierarchical Models. Cambridge University Press.
+Gelman, A. and Hill, J. (2007). Data Analysis Using Regression and
+Multilevel/Hierarchical Models. Cambridge University Press.
 
-Harrell, F. (2024). What Does a Statistical Method Assume? Statistical Thinking. https://www.fharrell.com/post/assume/
+Harrell, F. (2024). What Does a Statistical Method Assume? Statistical
+Thinking. <https://www.fharrell.com/post/assume/>
 
-Huang, H. (2023). Ridesharing Price Prediction: Exploring the strategies of Dynamic Pricing. Highlights in Business Economics and Management, 10, 106–110. https://doi.org/10.54097/hbem.v10i.7963
+Huang, H. (2023). Ridesharing Price Prediction: Exploring the strategies
+of Dynamic Pricing. Highlights in Business Economics and Management, 10,
+106–110. <https://doi.org/10.54097/hbem.v10i.7963>
 
-Jones, M. A., Guarinello, M., Soderberg, C., & Wasser, L. A. (2020). Time series 02: Dealing 
-with dates & times in R - as.Date, POSIXct, POSIXlt. National Ecological Observatory Network. https://www.neonscience.org/resources/learning-hub/tutorials/dc-convert-date-time-posix-r
+Jones, M. A., Guarinello, M., Soderberg, C., & Wasser, L. A. (2020).
+Time series 02: Dealing with dates & times in R - as.Date, POSIXct,
+POSIXlt. National Ecological Observatory Network.
+<https://www.neonscience.org/resources/learning-hub/tutorials/dc-convert-date-time-posix-r>
 
-Kurui, M. (2025). Mastering Gamma GLM in Statsmodels: A Python Tutorial. CodePointtech. https://codepointtech.com/mastering-gamma-glm-in-statsmodels-a-python-tutorial/
+Kurui, M. (2025). Mastering Gamma GLM in Statsmodels: A Python Tutorial.
+CodePointtech.
+<https://codepointtech.com/mastering-gamma-glm-in-statsmodels-a-python-tutorial/>
 
-Munde, R. (2019). Uber & Lyft cab prices. Kaggle. https://www.kaggle.com/datasets/ravi72munde/uber-lyft-cab-prices
+Munde, R. (2019). Uber & Lyft cab prices. Kaggle.
+<https://www.kaggle.com/datasets/ravi72munde/uber-lyft-cab-prices>
 
-OpenAI. (2026). ChatGPT [Large language model]. https://chatgpt.com/
+OpenAI. (2026). ChatGPT [Large language model]. <https://chatgpt.com/>
 
-Osborn, L. (n.d.). Boston Weather in December. Current Results Weather and Science Facts. https://www.currentresults.com/Weather/Massachusetts/Places/boston-weather-in-december.php
+Osborn, L. (n.d.). Boston Weather in December. Current Results Weather
+and Science Facts.
+<https://www.currentresults.com/Weather/Massachusetts/Places/boston-weather-in-december.php>
 
-Psychology Town. (2025). Exploring the concept of dispersion in data analysis. Psychology Town. https://psychology.town/statistics/dispersion-concept-data-analysis/
+Psychology Town. (2025). Exploring the concept of dispersion in data
+analysis. Psychology Town.
+<https://psychology.town/statistics/dispersion-concept-data-analysis/>
 
-Reichenbach, M. (2014). McFadden's pseudo-R2 interpretation. Cross Validated. 
-https://stats.stackexchange.com/questions/82105/mcfaddens-pseudo-r2-interpretation
+Reichenbach, M. (2014). McFadden's pseudo-R2 interpretation. Cross
+Validated.
+<https://stats.stackexchange.com/questions/82105/mcfaddens-pseudo-r2-interpretation>
 
-RDocumentation. (2019). grep: Pattern matching and replacement. 
-RDocumentation. https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/grep
+RDocumentation. (2019). grep: Pattern matching and replacement.
+RDocumentation.
+<https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/grep>
 
-Signorell, A., Mainwaring, B., & Wollschlaeger, D. (n.d.). Pseudo R2 statistics. CRAN. https://search.r-project.org/CRAN/refmans/DescTools/html/PseudoR2.html
+Signorell, A., Mainwaring, B., & Wollschlaeger, D. (n.d.). Pseudo R2
+statistics. CRAN.
+<https://search.r-project.org/CRAN/refmans/DescTools/html/PseudoR2.html>
 
-Signorell, A. (2025). Tools for descriptive statistics and exploratory data analysis. 
-RDocumentation. https://www.rdocumentation.org/packages/DescTools/versions/0.99.60
+Signorell, A. (2025). Tools for descriptive statistics and exploratory
+data analysis. RDocumentation.
+<https://www.rdocumentation.org/packages/DescTools/versions/0.99.60>
 
-Simpson, G. L., (2024). gratia: An R package for exploring generalized additive models. Journal of Open Source Software, 9(104), 6962, https://doi.org/10.21105/joss.06962
+Simpson, G. L., (2024). gratia: An R package for exploring generalized
+additive models. Journal of Open Source Software, 9(104), 6962,
+<https://doi.org/10.21105/joss.06962>
 
-The R Graph Gallery. (n.d.). Basic barplot with ggplot2. The R Graph Gallery. 
-https://r-graph-gallery.com/218-basic-barplots-with-ggplot2.html
+The R Graph Gallery. (n.d.). Basic barplot with ggplot2. The R Graph
+Gallery.
+<https://r-graph-gallery.com/218-basic-barplots-with-ggplot2.html>
 
-The R Graph Gallery. (n.d.). ggplot2 heatmap. The R Graph Gallery. https://r-graph-gallery.com/79-levelplot-with-ggplot2.html
+The R Graph Gallery. (n.d.). ggplot2 heatmap. The R Graph Gallery.
+<https://r-graph-gallery.com/79-levelplot-with-ggplot2.html>
 
-TidyVerse. (n.d.). Violin plot. ggplot2. 
-https://ggplot2.tidyverse.org/reference/geom_violin.html
+TidyVerse. (n.d.). Violin plot. ggplot2.
+<https://ggplot2.tidyverse.org/reference/geom_violin.html>
 
-Tran, T.-A. (2025). Model diagnostics for GAM (generalised additive model). Cross Validated. 
-https://stats.stackexchange.com/questions/664508/model-diagnostics-for-gam-generalised-additive-model
+Tran, T.-A. (2025). Model diagnostics for GAM (generalised additive
+model). Cross Validated.
+<https://stats.stackexchange.com/questions/664508/model-diagnostics-for-gam-generalised-additive-model>
 
-Wood, S. N. (2017). Generalized Additive Models: An Introduction with R (2nd ed.). Chapman and Hall/CRC.
+Wood, S. N. (2017). Generalized Additive Models: An Introduction with R
+(2nd ed.). Chapman and Hall/CRC.
 
-Vaisala contributors. (n.d.). Relative humidity – what is it and why is it important? Vaisala. https://www.vaisala.com/en/blog/2018-10/relative-humidity-what-it-and-why-it-important
-Wikipedia Contributors. (2026). Imperial Units. Wikipedia. https://en.wikipedia.org/wiki/Imperial_units
+Vaisala contributors. (n.d.). Relative humidity – what is it and why is
+it important? Vaisala.
+<https://www.vaisala.com/en/blog/2018-10/relative-humidity-what-it-and-why-it-important>
+Wikipedia Contributors. (2026). Imperial Units. Wikipedia.
+<https://en.wikipedia.org/wiki/Imperial_units>
 
-Wikipedia contributors. (2025). Cloud cover. Wikipedia. https://en.wikipedia.org/wiki/Cloud_cover
+Wikipedia contributors. (2025). Cloud cover. Wikipedia.
+<https://en.wikipedia.org/wiki/Cloud_cover>
 
+## AI Use Statement
 
-##AI Use Statement
-
-AI tools such as Claude AI, ChatGPT and Grammarly were used. For the report, it was used to assist and enhance the writing. For the code it was used to assist and debug the code. The content in this project and the conclusions drawn from the data are our own.
-
-
-
+AI tools such as Claude AI, ChatGPT and Grammarly were used. For the
+report, it was used to assist and enhance the writing. For the code it
+was used to assist and debug the code. The content in this project and
+the conclusions drawn from the data are our own.
