@@ -11,9 +11,9 @@ editor_options:
 ---
 
 *Note:* Before running the code please generate the
-merged_data_cleaned.csv. To do this ensure you have saved the raw data
-files from the repository and then run Cleaning And Merging The Data.R
-to generate the merged_data_cleaned.csv. Due to file size limitations we
+merged_data_cleaned.csv. To generate this file ensure you have saved the raw data
+files from the repository here (https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis/tree/main) and then run Cleaning And Merging The Data.R found in the R folder here on GitHub (https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis/blob/main/R/Cleaning%20And%20Merging%20The%20Data.R).
+Due to file size limitations we
 were unable to upload the compiled merged_data_cleaned.csv file
 directly.
 
@@ -987,7 +987,7 @@ print(glm_kfold)
 
 **Research Question 1:**
 
-The GAM explained approximately 92 percent of the deviance in ride prices, with an adjusted R squared of approximately 0.90. The dominant predictors were distance, cab type, and service name rather than weather conditions. The model was fit with the select equals TRUE option in bam, which adds an extra shrinkage penalty to each smooth term. This penalty allows the model to effectively remove smooths that do not contribute meaningfully, providing automatic variable selection on the weather terms rather than relying on manual inspection of p values.
+The GAM explained approximately 92 percent of the deviance in ride prices, with an adjusted R squared of approximately 0.90. The dominant predictors were distance, cab type, and service name rather than weather conditions. The model was fit with the select equals TRUE option in GAM, which adds an extra shrinkage penalty to each smooth term. This penalty allows the model to effectively remove smooths that do not contribute meaningfully, providing automatic variable selection on the weather terms rather than relying on manual inspection of p values.
  
 **Figure 21: Estimated Smooth Effects of Weather Variables on Log(Price):**
  
@@ -1058,10 +1058,13 @@ Our third and final analysis led us to the conclusion that cab combo and surge m
 ## Limitations:
 
 Several limitations should be considered when interpreting these results. The most significant is the narrow observation window. The dataset covers only 23 days from late November to mid December 2018, with temperatures ranging from approximately 20 to 55 degrees Fahrenheit. This window does not include extreme weather events such as blizzards, ice storms, or heat waves. It is plausible that weather effects on price and surge would emerge under more extreme conditions that our data does not contain.
+
 The absence of Uber surge data is another important limitation. Because the API always returned a surge multiplier of 1.0 for Uber rides, we cannot make any claims about Uber's surge behaviour. Our surge findings apply only to Lyft.
 The binary coding of surge discards information about surge magnitude. A ride with a 1.25 multiplier and a ride with a 3.0 multiplier are treated identically. An ordinal or continuous model could in principle recover this information, but the extreme rarity of high surge levels in our data made such models infeasible.
+
 The rain variable presents a particular challenge. With 59 percent of missing values replaced by zero, our estimate of rain's effect is likely conservative. The wide confidence interval on rain's odds ratio in the surge model reflects this uncertainty.
 Rides in this dataset are not fully independent. The same routes are sampled repeatedly across the 23 day period, and rides at nearby times likely share similar conditions. Neither the GAM nor the GLM explicitly accounts for this temporal or spatial correlation. While this is unlikely to change the direction of our findings, it may affect the precision of the standard errors.
+
 Since the timeframe for the data collection was limited to only 23 days, we believe assumptions may have been made about data points in the construction of the dataset. Something that indicates this limitation to us is the fact that all cab combo categories have very similar amounts of data. If this was simulated or the data was filtered out in construction of the dataset it could have an impact on our final conclusions.
 
 The dataset locations are limited to areas of Boston Massachusetts which limits the broader application of our conclusions. Since Uber and Lyft are used in many regions there may be different influences on pricing and surge multiplier in those regions that we were not able to analyse.
