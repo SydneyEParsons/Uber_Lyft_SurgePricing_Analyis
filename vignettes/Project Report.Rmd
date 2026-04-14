@@ -229,7 +229,7 @@ ggplot(merged_df, aes(x = temp, y = price)) +
   theme_minimal()
 ```
 
-We then plotted temperature against price on a log scale with a GAM smoother overlaid on a random subsample. As shown in Figure 2, the smoother revealed a slight non-linear trend, but the effect was visually minor compared to the spread of the data. This indicated that while a non-linear relationship may exist, its practical magnitude is small relative to other sources of price variation.
+We then plotted temperature against price on a log scale with a GAM smoother overlaid on a random subsample. As shown in Figure 2, the smoother revealed a slight non-linear trend, but the effect was visually minor compared to the spread of the data. This indicated that while a non-linear relationship may exist, its practical magnitude is small relative to other sources of price variation. The horizontal banding pattern visible in both panels reflects the distinct pricing tiers of different service levels (e.g., UberPool, UberX, Black), which produce discrete price clusters. Within each tier, prices show little variation across the temperature range.
 
 **Figure 3: Correlation Between Weather and Price by Service Type:**
 
@@ -260,7 +260,7 @@ ggplot(cor_long, aes(x = `Weather Variable`, y = cab_label, fill = Correlation))
   theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ```
 
-Figure 3 presents the unadjusted Pearson correlations between weather variables and price for each service type. The correlations were uniformly weak across all service types with most values falling between negative 0.05 and positive 0.05. Temperature showed the strongest individual correlation, but it remained small in absolute terms. These patterns indicated that weather variables are unlikely to be dominant price drivers, motivating our use of a model that can detect subtle and potentially non-linear effects.
+Figure 3 presents the unadjusted Pearson correlations between weather variables and price for each service type. The correlations were uniformly weak across all service types with most values falling between negative 0.01 and positive 0.01. Temperature showed the strongest individual correlation, but it remained small in absolute terms. These patterns indicated that weather variables are unlikely to be dominant price drivers, motivating our use of a model that can detect subtle and potentially non-linear effects.
 
 ### EDA: Research Question 2
 ```{r}
@@ -314,7 +314,7 @@ ggplot(source_surge, aes(x = reorder(source, surge_rate), y = surge_rate)) +
   theme_minimal()
 ```
 
-As shown in Figure 1, there was substantial variation in surge rates by pickup location with some locations showing surge rates above 30 percent while others remained below 10 percent. This suggested that geographic factors play a significant role in surge occurrence.
+As shown in Figure 4, there was substantial variation in surge rates by pickup location, ranging from 1.8% at North End to 13.4% at Back Bay. This suggested that pickup location factors play a significant role in surge occurrence.
 
 **Figure 5: Surge Rate by Dropoff Location:**
 
@@ -340,7 +340,7 @@ ggplot(dest_surge, aes(x = reorder(destination, surge_rate), y = surge_rate)) +
   theme_minimal()
 ```
 
-Figure 2 presents a similar analysis for dropoff locations. The variation across destinations was also present though somewhat less pronounced than for pickup locations, indicating that where a ride begins may matter more than where it ends for surge pricing.
+Figure 5 presents a similar analysis for dropoff locations. The variation across destinations was also present though somewhat less pronounced than for pickup locations, indicating that where a ride begins may matter more than where it ends for surge pricing.
 
 **Figure 6: Hourly Surge Rate (Lyft):**
 
@@ -359,7 +359,7 @@ ggplot(hour_surge, aes(x = hour_of_day, y = surge_rate)) +
   theme_minimal()
 ```
 
-Figure 3 showed that surge rates peaked during morning and evening commute hours, though the magnitude of the difference was moderate. The highest surge rates were observed in the early morning hours while midday showed the lowest rates overall.
+Figure 6 showed that surge rates peaked around 8am at approximately 9.5%, with a secondary peak around 3pm. The lowest surge rate occurred around 11am at approximately 7.0%. The overall range was narrow, spanning only about 2.5 percentage points, indicating that time of day has a limited effect on surge occurrence.
 
 **Figure 7: Weather Conditions: Surge vs. Non-Surge:**
 
@@ -388,7 +388,7 @@ ggplot(lyft_means, aes(x = Variable, y = mean_val, fill = Surge)) +
   theme(axis.text.x = element_text(angle = 20, hjust = 1))
 ```
 
-Figure 4 compared standardized weather variable means between surge and non-surge rides. The differences were extremely small across all weather variables, providing early evidence that weather is not the primary trigger for surge pricing.
+Figure 7 compared standardized weather variable means between surge and non-surge rides. The differences were extremely small across all weather variables, providing early evidence that weather is not the primary trigger for surge pricing.
 
 **Figure 8: Surge Rate by Time Period and Day of Week:**
 
@@ -411,7 +411,7 @@ ggplot(time_day_surge, aes(x = day_of_week, y = time_period, fill = surge_rate))
   theme(panel.grid = element_blank())
 ```
 
-Figure 5 presents a heatmap of surge rates across time periods and days of the week. The heatmap confirmed that temporal patterns exist but are secondary to location effects. Certain combinations of time period and day showed slightly elevated surge rates, but no single temporal factor dominated the way that pickup location did.
+Figure 8 presents a heatmap of surge rates across time periods and days of the week. The heatmap confirmed that temporal patterns exist but are secondary to location effects. Certain combinations of time period and day showed slightly elevated surge rates, but no single temporal factor dominated the way that pickup location did.
 
 ### EDA: Research Question 3
 
@@ -752,7 +752,7 @@ The log link ensures that predicted prices remain positive and that covariate ef
 
 We used smooth functions for the six weather variables to allow for potentially non-linear relationships, while distance, cab type, service name, source, and destination entered as parametric terms. The basis dimensions were set to reflect the expected complexity of each relationship. Temperature was assigned k equals 8 because it had the widest range and the most potential for complex non-linearity. Clouds and pressure were assigned k equals 5 for moderate flexibility. Wind, humidity, and rain were each assigned k equals 4 because the data showed limited variability in these variables or, in the case of rain, very sparse observations. The effective degrees of freedom reported in the model output indicate how much of this flexibility the data actually require.
 
-The model was fit using the bam function from the mgcv package (Wood, 2017), which is a computationally efficient version of gam designed for large datasets. We used fast REML for smoothing parameter estimation with the discrete option enabled to further accelerate computation.
+The model was fit using the bam function from the mgcv package (Wood, 2017), which is a computationally efficient version of gam designed for large datasets. We used fast REML for smoothing parameter estimation with the discrete option enabled to further accelerate computation. We also specified select equals TRUE, which adds an extra shrinkage penalty to each smooth term. This allows the model to shrink smooth terms to zero effective degrees of freedom if the data do not support their inclusion, providing a form of automatic variable selection for the weather covariates.
 
 The key assumptions of this model are that conditional on covariates, prices follow a Gamma distribution with a constant shape parameter, and that the smooth terms can adequately approximate the true underlying relationships. We also assume that observations are conditionally independent given the covariates. We acknowledge that repeated sampling of the same routes over time may introduce correlation, which is discussed further in the Limitations section.
 
@@ -797,7 +797,7 @@ gam_model <- bam(
 summary(gam_model)
 ```
 
-```{r fig.width=8, fig.height=8}
+```{r fig.width=8, fig.height=8, Figure 21: Estimated Smooth Effects of Weather Variables on Log(Price)}
 plot(gam_model, shade = TRUE, shade.col = "lightblue",
      residuals = FALSE, rug = TRUE, se = TRUE, select = 1)
 plot(gam_model, shade = TRUE, shade.col = "lightblue",
@@ -812,7 +812,7 @@ plot(gam_model, shade = TRUE, shade.col = "lightblue",
      residuals = FALSE, rug = TRUE, se = TRUE, select = 6)
 ```
 
-```{r fig.width=8, fig.height=8}
+```{r fig.width=8, fig.height=8, Figure 22: GAM Diagnostic Plots}
 par(mfrow = c(2, 2))
 gam.check(gam_model)
 par(mfrow = c(1, 1))
@@ -894,7 +894,7 @@ cat("Average rides per destination:", round(nrow(lyft_df) / length(unique(lyft_d
 cat("McFadden Pseudo R-squared:", PseudoR2(glm_surge, which = "McFadden"), "\n")
 ```
 
-```{r}
+```{r Figure 23: Odds Ratios for Surge Occurrence (GLM)}
 fe <- coef(glm_surge)
 se <- summary(glm_surge)$coefficients[, "Std. Error"]
  
@@ -919,7 +919,7 @@ ggplot(or_df, aes(x = reorder(Variable, OR), y = OR)) +
   theme_minimal()
 ```
 
-```{r}
+```{r Figure 24: Binned Residual Plot (GLM)}
 fitted_vals <- fitted(glm_surge)
 resids      <- residuals(glm_surge, type = "response")
  
@@ -950,7 +950,7 @@ ggplot(bin_df, aes(x = avg_fitted, y = avg_resid)) +
 
 ### Research Question #3 
 
-```{r}
+```{r Figure 25: Residuals Plots}
 #Modelling GAM
 gam_model_price <- gam(price ~ holiday + day_of_the_week + s(hour) + cab_combo + surge_multiplier,
                       data = merged_data,
@@ -960,7 +960,7 @@ appraise(gam_model_price)
 draw(gam_model_price)
 ```
 
-```{r}
+```{r Figure 26: Residuals Plots}
 #Modelling GLM
 glm_model_price <- glm(price ~ holiday + day_of_the_week + hour + cab_combo + surge_multiplier,
                       data = merged_data,
@@ -991,7 +991,7 @@ The GAM explained approximately 92 percent of the deviance in ride prices, with 
  
 **Figure 21: Estimated Smooth Effects of Weather Variables on Log(Price):**
  
-Figure 21 displays the estimated smooth effects for each of the six weather variables on the log price scale, with shaded areas representing 95 percent confidence intervals and rug marks showing the distribution of observed values. Among the weather smooth terms, cloud cover reached high statistical significance with a p value of 0.0009 and an effective degrees of freedom of approximately 1.89, indicating a modest non-linear relationship with price. Atmospheric pressure was also statistically significant with a p value of 0.017 and an effective degrees of freedom of approximately 1.59. The remaining four weather variables were effectively shrunk to zero by the selection penalty. Temperature had an effective degrees of freedom of 0.05 with a p value of 0.42, while wind, humidity, and rain all had effective degrees of freedom below 0.1 and non-significant p values. This confirms that only cloud cover and pressure contribute to the model, while the other weather variables have no detectable influence on price after controlling for structural covariates. The practical magnitude of even the two significant effects was small. The smooth curves varied by less than 0.05 on the log price scale, translating to price differences of roughly 5 percent or less across the observed range of each variable.
+Figure 21 displays the estimated smooth effects for each of the six weather variables on the log price scale, with dashed lines representing 95 percent confidence intervals and rug marks showing the distribution of observed values. Among the weather smooth terms, cloud cover reached high statistical significance with a p value of 0.0009 and an effective degrees of freedom of approximately 1.89, indicating a modest non-linear relationship with price. Atmospheric pressure was also statistically significant with a p value of 0.017 and an effective degrees of freedom of approximately 1.59. The remaining four weather variables were effectively shrunk to zero by the selection penalty. Temperature had an effective degrees of freedom of 0.05 with a p value of 0.42, while wind, humidity, and rain all had effective degrees of freedom below 0.1 and non-significant p values. This confirms that only cloud cover and pressure contribute to the model, while the other weather variables have no detectable influence on price after controlling for structural covariates. The practical magnitude of even the two significant effects was small. The smooth curves varied by less than 0.005 on the log price scale, translating to price differences of roughly 5 percent or less across the observed range of each variable.
  
 **Figure 22: GAM Diagnostic Plots:**
  
@@ -1046,7 +1046,7 @@ Our analysis of the Uber and Lyft pricing dataset by Munde led us to draw new co
 
 **Research Question 1:**
 
-For our first research question we found that weather conditions have almost no practical effect on ride prices. After controlling for distance, cab type, and route, the GAM with the select equals TRUE shrinkage penalty identified only two weather variables as contributing to the model. Cloud cover was highly significant with a p value of 0.0009 and pressure was significant with a p value of 0.017. The remaining four variables, temperature, wind, humidity, and rain, were effectively shrunk to zero by the penalty, with effective degrees of freedom near zero and non-significant p values. Even for cloud cover and pressure, the practical magnitude was minimal, with the smooth curves varying by less than 0.05 on the log price scale. This is the opposite of what we predicted in our hypothesis, which was that adverse weather would lead to meaningful price increases. The data suggest that during this observation period, weather did not play a substantial role in the pricing algorithms of either platform.
+For our first research question we found that weather conditions have almost no practical effect on ride prices. After controlling for distance, cab type, and route, the GAM with the select equals TRUE shrinkage penalty identified only two weather variables as contributing to the model. Cloud cover was highly significant with a p value of 0.0009 and pressure was significant with a p value of 0.017. The remaining four variables, temperature, wind, humidity, and rain, were effectively shrunk to zero by the penalty, with effective degrees of freedom near zero and non-significant p values. Even for cloud cover and pressure, the practical magnitude was minimal, with the smooth curves varying by less than 0.005 on the log price scale. This is the opposite of what we predicted in our hypothesis, which was that adverse weather would lead to meaningful price increases. The data suggest that during this observation period, weather did not play a substantial role in the pricing algorithms of either platform.
 
 **Research Question 2:**
 
