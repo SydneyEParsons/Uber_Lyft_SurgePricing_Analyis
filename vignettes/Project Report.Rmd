@@ -987,7 +987,7 @@ print(glm_kfold)
 
 **Research Question 1:**
 
-The GAM explained approximately 92 percent of the deviance in ride prices, with an adjusted R squared of approximately 0.90. The dominant predictors were distance, cab type, and service name rather than weather conditions. The model was fit with the select equals TRUE option in GAM, which adds an extra shrinkage penalty to each smooth term. This penalty allows the model to effectively remove smooths that do not contribute meaningfully, providing automatic variable selection on the weather terms rather than relying on manual inspection of p values.
+The GAM explained approximately 92 percent of the deviance in ride prices, with an adjusted R squared of approximately 0.90. The dominant predictors were distance, cab type, and service name rather than weather conditions. The model was fit with the select equals TRUE option in bam, which adds an extra shrinkage penalty to each smooth term. This penalty allows the model to effectively remove smooths that do not contribute meaningfully, providing automatic variable selection on the weather terms rather than relying on manual inspection of p values.
  
 **Figure 21: Estimated Smooth Effects of Weather Variables on Log(Price):**
  
