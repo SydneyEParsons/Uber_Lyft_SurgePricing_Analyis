@@ -10,6 +10,14 @@ editor_options:
     wrap: 72
 ---
 
+**Front Matter** 
+
+Uber and Lyft Surge Pricing Analysis 
+By Lingyun Jiang (B00850695) and Sydney Parsons (B01068132) 
+Data Analysis STAT 4620/5620 Winter 25-26 
+Link to GitHub:
+<https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis>
+
 *Note:* Before running the code please generate the
 merged_data_cleaned.csv. To generate this file ensure you have saved the raw data
 files from the repository here (https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis/tree/main) and then run Cleaning And Merging The Data.R found in the R folder here on GitHub (https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis/blob/main/R/Cleaning%20And%20Merging%20The%20Data.R).
@@ -35,14 +43,6 @@ library(scales)
 library(tidyr)
 library(lme4)
 ```
-
-**Front Matter** 
-
-Uber and Lyft Surge Pricing Analysis 
-By Lingyun Jiang (B00850695) and Sydney Parsons (B01068132) 
-Data Analysis STAT 4620/5620 Winter 25-26 
-Link to GitHub:
-<https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis>
 
 ## Abstract
 
