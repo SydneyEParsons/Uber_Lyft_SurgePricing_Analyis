@@ -808,7 +808,8 @@ gam_model <- bam(
 summary(gam_model)
 ```
 
-```{r fig.width=8, fig.height=8, Figure 21: Estimated Smooth Effects of Weather Variables on Log(Price)}
+```{r fig.width=8, fig.height=8}
+#Figure 21: Estimated Smooth Effects of Weather Variables on Log(Price)
 plot(gam_model, shade = TRUE, shade.col = "lightblue",
      residuals = FALSE, rug = TRUE, se = TRUE, select = 1)
 plot(gam_model, shade = TRUE, shade.col = "lightblue",
@@ -823,7 +824,8 @@ plot(gam_model, shade = TRUE, shade.col = "lightblue",
      residuals = FALSE, rug = TRUE, se = TRUE, select = 6)
 ```
 
-```{r fig.width=8, fig.height=8, Figure 22: GAM Diagnostic Plots}
+```{r fig.width=8, fig.height=8}
+#Figure 22: GAM Diagnostic Plots
 par(mfrow = c(2, 2))
 gam.check(gam_model)
 par(mfrow = c(1, 1))
@@ -905,7 +907,8 @@ cat("Average rides per destination:", round(nrow(lyft_df) / length(unique(lyft_d
 cat("McFadden Pseudo R-squared:", PseudoR2(glm_surge, which = "McFadden"), "\n")
 ```
 
-```{r Figure 23: Odds Ratios for Surge Occurrence (GLM)}
+```{r}
+#Figure 23: Odds Ratios for Surge Occurrence (GLM)
 fe <- coef(glm_surge)
 se <- summary(glm_surge)$coefficients[, "Std. Error"]
  
@@ -930,7 +933,8 @@ ggplot(or_df, aes(x = reorder(Variable, OR), y = OR)) +
   theme_minimal()
 ```
 
-```{r Figure 24: Binned Residual Plot (GLM)}
+```{r}
+#Figure 24: Binned Residual Plot (GLM)
 fitted_vals <- fitted(glm_surge)
 resids      <- residuals(glm_surge, type = "response")
  
@@ -961,8 +965,8 @@ ggplot(bin_df, aes(x = avg_fitted, y = avg_resid)) +
 
 ### Research Question #3 
 
-```{r Figure 25: Residuals Plots}
-#Modelling GAM
+```{r}
+#Figure 25: Residuals Plots - Modelling GAM
 gam_model_price <- gam(price ~ holiday + day_of_the_week + s(hour) + cab_combo + surge_multiplier,
                       data = merged_data,
                       family = Gamma(link = "log"))
@@ -971,8 +975,8 @@ appraise(gam_model_price)
 draw(gam_model_price)
 ```
 
-```{r Figure 26: Residuals Plots}
-#Modelling GLM
+```{r}
+# Figure 26: Residuals Plots - Modelling GLM
 glm_model_price <- glm(price ~ holiday + day_of_the_week + hour + cab_combo + surge_multiplier,
                       data = merged_data,
                       family = Gamma(link = "log"))
