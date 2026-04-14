@@ -806,7 +806,8 @@ facet_wrap(~ cab_combo) +
 labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price") 
 
 ggplot(data=normal_time_holiday_time_summary %>% filter(cab_type == "Uber"), 
-       mapping =aes(x=hour, y=mean_price, color=holiday)) +
+       mapping =aes(x=hour, 
+        y=mean_price, color=holiday)) +
 geom_line() +
 facet_wrap(~ cab_combo) +
 labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price")
