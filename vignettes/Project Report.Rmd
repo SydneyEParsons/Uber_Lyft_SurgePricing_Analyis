@@ -45,7 +45,7 @@ Data Analysis STAT 4620/5620 Winter 25-26
 Link to GitHub:
 <https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis>
 
-## Abstract (150 words)
+## Abstract
 
 This is an analysis of Uber and Lyft Pricing in Boston Massachusetts for 23 days in late November to early December of 2018 (Munde, 2019). In this paper we cover three main research questions with the goal of determining the overall impacts on pricing for Uber and Lyft. 
 
@@ -570,7 +570,7 @@ facet_wrap(~ cab_type) +
 labs(title = "Comparing Holiday Pricing to Cab Combo", x="Holiday", y="Mean Price") +
   coord_flip() 
 ```
-For price distribution by holiday, we presumed traffic would be higher on these days due to people travelling for the holiday and having time off. However, as seen in the violin plots and the bar plots below that was not the case. This may indicate that the pricing was changing slightly between cab-type segments on Lyft rides. However, Uber does remain very constant in its pricing regardless of holiday. The bar graph also shows the Lyft ride prices being more incremental than Uber ride pricing which remains very stable. 
+For price distribution by holiday, we presumed traffic would be higher on these days due to people travelling for the holiday and having time off. However, as seen in the violin plots and the bar plots above that was not the case. This may indicate that the pricing was changing slightly between cab-type segments on Lyft rides. However, Uber does remain very constant in its pricing regardless of holiday. The bar graph also shows the Lyft ride prices being more incremental than Uber ride pricing which remains very stable. 
 
 **Figure 15: Comparing Cost of Rides on Holidays:**
 
