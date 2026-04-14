@@ -797,13 +797,22 @@ gam_model <- bam(
 summary(gam_model)
 ```
 
-```{r}
-par(mfrow = c(3, 2), mar = c(4, 4, 2, 1))
+```{r fig.width=8, fig.height=8}
 plot(gam_model, shade = TRUE, shade.col = "lightblue",
-     residuals = FALSE, rug = TRUE, se = TRUE)
+     residuals = FALSE, rug = TRUE, se = TRUE, select = 1)
+plot(gam_model, shade = TRUE, shade.col = "lightblue",
+     residuals = FALSE, rug = TRUE, se = TRUE, select = 2)
+plot(gam_model, shade = TRUE, shade.col = "lightblue",
+     residuals = FALSE, rug = TRUE, se = TRUE, select = 3)
+plot(gam_model, shade = TRUE, shade.col = "lightblue",
+     residuals = FALSE, rug = TRUE, se = TRUE, select = 4)
+plot(gam_model, shade = TRUE, shade.col = "lightblue",
+     residuals = FALSE, rug = TRUE, se = TRUE, select = 5)
+plot(gam_model, shade = TRUE, shade.col = "lightblue",
+     residuals = FALSE, rug = TRUE, se = TRUE, select = 6)
 ```
 
-```{r}
+```{r fig.width=8, fig.height=8}
 par(mfrow = c(2, 2))
 gam.check(gam_model)
 par(mfrow = c(1, 1))
