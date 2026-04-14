@@ -201,7 +201,7 @@ Throughout our project we used many of the tools from our statistical analysis t
 
 **Figure 1: Distribution of Ride Prices**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 ggplot(merged_df, aes(x = price)) +
   geom_histogram(bins = 60, fill = "steelblue", color = "white", alpha = 0.8) +
   labs(title = "Distribution of Ride Prices",
@@ -213,7 +213,7 @@ For our first research question we began by examining the distribution of ride p
 
 **Figure 2: Temperature vs. Price (Log Scale) by Platform:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 set.seed(42)
 sample_df <- merged_df %>% slice_sample(n = 20000)
 
@@ -232,7 +232,7 @@ We then plotted temperature against price on a log scale with a GAM smoother ove
 
 **Figure 3: Correlation Between Weather and Price by Service Type:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 cor_results <- merged_df %>%
   group_by(cab_label) %>%
   summarise(
@@ -262,7 +262,7 @@ ggplot(cor_long, aes(x = `Weather Variable`, y = cab_label, fill = Correlation))
 Figure 3 presents the unadjusted Pearson correlations between weather variables and price for each service type. The correlations were uniformly weak across all service types with most values falling between negative 0.01 and positive 0.01. Temperature showed the strongest individual correlation, but it remained small in absolute terms. These patterns indicated that weather variables are unlikely to be dominant price drivers, motivating our use of a model that can detect subtle and potentially non-linear effects.
 
 ### EDA: Research Question 2
-```{r}
+```{r fig.width=8, fig.height=8}
 # Confirm Uber surge is always 1, only Lyft has variation
 merged_df %>%
   group_by(cab_type) %>%
@@ -278,7 +278,7 @@ merged_df %>%
 
 For our second research question we focused on the Lyft subset of the data because Uber showed a constant surge multiplier of 1.0 throughout the entire dataset. Shared rides were excluded as they also showed no surge variation, which would cause estimation problems in a logistic regression.
 
-```{r}
+```{r fig.width=8, fig.height=8}
 # Focus on Lyft only, exclude Shared rides
 lyft_df <- merged_df %>%
   filter(cab_type == "Lyft", name != "Shared")
@@ -291,7 +291,7 @@ table(lyft_df$surge_multiplier)
 
 **Figure 4: Surge Rate by Pickup Location:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 source_surge <- lyft_df %>%
   group_by(source) %>%
   summarise(
@@ -317,7 +317,7 @@ As shown in Figure 4, there was substantial variation in surge rates by pickup l
 
 **Figure 5: Surge Rate by Dropoff Location:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 dest_surge <- lyft_df %>%
   group_by(destination) %>%
   summarise(
@@ -343,7 +343,7 @@ Figure 5 presents a similar analysis for dropoff locations. The variation across
 
 **Figure 6: Hourly Surge Rate (Lyft):**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 hour_surge <- lyft_df %>%
   group_by(hour_of_day) %>%
   summarise(surge_rate = mean(surge_binary), n_rides = n(), .groups = "drop")
@@ -362,7 +362,7 @@ Figure 6 showed that surge rates peaked around 8am at approximately 9.5%, with a
 
 **Figure 7: Weather Conditions: Surge vs. Non-Surge:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 weather_vars <- c("temp", "wind", "humidity", "clouds", "pressure", "rain")
 
 # Standardize weather variables for comparable scale
@@ -391,7 +391,7 @@ Figure 7 compared standardized weather variable means between surge and non-surg
 
 **Figure 8: Surge Rate by Time Period and Day of Week:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 time_day_surge <- lyft_df %>%
   group_by(time_period, day_of_week) %>%
   summarise(
@@ -416,7 +416,7 @@ Figure 8 presents a heatmap of surge rates across time periods and days of the w
 
 **Figure 9: Price Distribution By Cab Type:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
   geom_boxplot(outlier.shape = NA) +
   facet_wrap(~ cab_type, scales = "free_x") +
@@ -431,7 +431,7 @@ To begin our EDA plots for our third research question we plotted our cab combo 
 
 **Figure 10: Analyze Hourly Price on Normal Days of the Week:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Analyze hourly price on normal days of the week
 normal_rush_dayofweek_summary <- merged_data %>%
     filter(holiday=="None") %>%
@@ -459,7 +459,7 @@ These line graphs show the mean pricing for the different cab combos during the 
 
 **Figure 11: Compare Day of the Week, Price and Cab Combo:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Compare day of week, price and cab_combo
 day_of_the_week <- merged_data %>%
   group_by(day_of_the_week, cab_type, cab_combo) %>%
@@ -503,7 +503,7 @@ Here we are focusing on the influence of the days of the week on the pricing of 
 
 **Figure 12: Price Distribution by Day of The Week:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 ggplot(merged_data, aes(x = day_of_the_week, y = price, fill = day_of_the_week)) +
   geom_violin(trim = FALSE) +  
   geom_boxplot(width = 0.1, outlier.shape = NA) +  
@@ -519,7 +519,7 @@ Since more variation was expected in the data as highlighted in our hypothesis, 
 
 **Figure 13: Compare Weekday and Weekends to Price and Cab Combo:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Compare weekday and weekends to price and cab_combo
 weekend_summary <- merged_data %>%
   group_by(is_weekend, cab_type, cab_combo) %>%
@@ -544,7 +544,7 @@ With little variation in the days of the week we analysed the data further. By p
 
 **Figure 14: Price Distribution By Holiday:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Comparing weekend and weekday pricing to holiday pricing
 holiday_summary_detailed <- merged_data %>%
   group_by(holiday, cab_type, cab_combo) %>%
@@ -579,7 +579,7 @@ For price distribution by holiday, we presumed traffic would be higher on these 
 
 **Figure 15: Comparing Cost of Rides on Holidays:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Compare time of day price on normal days to time of day on holiday
 normal_time_holiday_time_summary <- merged_data %>%
     filter(is_weekend==0) %>%
@@ -605,7 +605,7 @@ To further visualise the pricing of Uber and Lyft on holidays we plotted them on
 
 **Figure 16: Comparing Rush Hour Price for Weekdays to Price on Normal Weekends:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Comparing rush hour price for weekdays to price on weekends
 rush_weekdays_normal_weekends_summary <- merged_data %>%
   group_by(rush_hour, is_weekend, cab_combo, cab_type) %>%
@@ -652,7 +652,7 @@ In this EDA section we plotted the comparison of rush hour to weekdays and weeke
 
 **Figure 17: Price Distribution by Rush Hour:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
   geom_violin(trim = FALSE) +  
   geom_boxplot(width = 0.1, outlier.shape = NA) +  
@@ -668,7 +668,7 @@ The following violin plot demonstrates the price distribution of Uber and Lyft a
 
 **Figure 18: Compare Cab Combo, Holiday and Uber & Lyft Surge Multiplier:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Compare cab_combo, holiday and surge multiplier
 holiday_surge_summary <- merged_data %>%
   group_by(holiday, cab_type, cab_combo) %>%
@@ -694,7 +694,7 @@ Surge multiplier was highlighted in our earlier research questions but we did al
 
 **Figure 19: Lyft and Uber Compare Cab Combo, Holiday and Surge Multiplier:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 ggplot(data=holiday_surge_summary %>% filter(cab_type == "Lyft"), 
     mapping = aes(x=holiday, y=cab_combo, fill=mean_surge)) +
 geom_tile() +
@@ -718,7 +718,7 @@ Here you can see a more clear breakdown of our surge visualization. A heatmap fo
 
 **Figure 20: Compare Pricing on Weekday Holidays to Rush Hour Pricing:**
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Compare pricing on weekday holidays to rush hour pricing
 weekday_holiday_rush_summary <- merged_data %>%
     filter(is_weekend==0) %>%
@@ -907,7 +907,7 @@ cat("Average rides per destination:", round(nrow(lyft_df) / length(unique(lyft_d
 cat("McFadden Pseudo R-squared:", PseudoR2(glm_surge, which = "McFadden"), "\n")
 ```
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Figure 23: Odds Ratios for Surge Occurrence (GLM)
 fe <- coef(glm_surge)
 se <- summary(glm_surge)$coefficients[, "Std. Error"]
@@ -933,7 +933,7 @@ ggplot(or_df, aes(x = reorder(Variable, OR), y = OR)) +
   theme_minimal()
 ```
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Figure 24: Binned Residual Plot (GLM)
 fitted_vals <- fitted(glm_surge)
 resids      <- residuals(glm_surge, type = "response")
@@ -965,7 +965,7 @@ ggplot(bin_df, aes(x = avg_fitted, y = avg_resid)) +
 
 ### Research Question #3 
 
-```{r}
+```{r fig.width=8, fig.height=8}
 #Figure 25: Residuals Plots - Modelling GAM
 gam_model_price <- gam(price ~ holiday + day_of_the_week + s(hour) + cab_combo + surge_multiplier,
                       data = merged_data,
@@ -975,7 +975,7 @@ appraise(gam_model_price)
 draw(gam_model_price)
 ```
 
-```{r}
+```{r fig.width=8, fig.height=8}
 # Figure 26: Residuals Plots - Modelling GLM
 glm_model_price <- glm(price ~ holiday + day_of_the_week + hour + cab_combo + surge_multiplier,
                       data = merged_data,
