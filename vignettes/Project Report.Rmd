@@ -13,8 +13,7 @@ editor_options:
 *Note:* Before running the code please generate the
 merged_data_cleaned.csv. To generate this file ensure you have saved the raw data
 files from the repository here (https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis/tree/main) and then run Cleaning And Merging The Data.R found in the R folder here on GitHub (https://github.com/SydneyEParsons/Uber_Lyft_SurgePricing_Analyis/blob/main/R/Cleaning%20And%20Merging%20The%20Data.R).
-Due to file size limitations we
-were unable to upload the compiled merged_data_cleaned.csv file
+Due to file size limitations we were unable to upload the compiled merged_data_cleaned.csv file
 directly.
 
 ```{r, include = FALSE}
@@ -427,6 +426,7 @@ ggplot(merged_data, aes(x = cab_combo, y = price, fill = cab_combo)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")
 ```
+
 To begin our EDA plots for our third research question we plotted our cab combo data compared to price. This was a starting point as we further breakdown the pricing analysis in the coming EDA plots. In this EDA plot we used boxplots to demonstrate this distribution and median of the pricing data per each category. As you can see from the visualization the plots show very segmented data. Both ride hailing apps have cab-types that are very regimented with their pricing, there is limited overlap between the pricing of different cab types. 
 
 **Figure 10: Analyze Hourly Price on Normal Days of the Week:**
@@ -454,6 +454,7 @@ facet_wrap(~ cab_combo) +
 labs(title = "Analyze Hourly Price on Normal Days of the Week
 ", x="Hour", y="Mean Price") 
 ```
+
 These line graphs show the mean pricing for the different cab combos during the days of the week. The lines overall remain very stable but there is greater variation with pricing in the higher price hailing tiers, specifically in Lyft-Lux Black, Lyft-Lux Black XL, Uber-Black, and Uber-Black SUV. These variances are not significant but it is clear there is more noise in these combos than the others.
 
 **Figure 11: Compare Day of the Week, Price and Cab Combo:**
@@ -497,6 +498,7 @@ labs(title = "Uber - Compare day of week, price and cab_combo
 ", x="Day of Week", y="Mean Price") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
 Here we are focusing on the influence of the days of the week on the pricing of ride hailing platforms Uber and Lyft. Our following EDA plots is a colour coded bar plot and heat maps. These plots help illustrate the relationship between the days of the week and our cab combo. As apparent through the plots the pricing remains very consistent across each day of the week and cab types. 
 
 **Figure 12: Price Distribution by Day of The Week:**
@@ -512,6 +514,7 @@ ggplot(merged_data, aes(x = day_of_the_week, y = price, fill = day_of_the_week))
   theme_minimal() +
   theme(legend.position = "none") 
 ```
+
 Since more variation was expected in the data as highlighted in our hypothesis, we plotted an additional EDA plot as a violin plot. This plot helps show the quantity of rides at each price point through the density of the waves. In our presentation it was highlighted that they were very uniform and that we should investigate further. After analysing the code we realized the smoothing we applied to the pots was distorting the final display. After removing that we were able to see the density of the prices more clearly. However, this plot reaffirms the lack of variation in pricing throughout the days of the week as seen in our initial EDA plots above.
 
 **Figure 13: Compare Weekday and Weekends to Price and Cab Combo:**
@@ -536,6 +539,7 @@ facet_wrap(~ cab_type) +
 labs(title = "Compare weekday and weekends to price and cab_combo", x="Is Weekend", y="Mean Price") +
   coord_flip() 
 ```
+
 With little variation in the days of the week we analysed the data further. By plotting the week day against the weekend we aimed to try to identify price variations on a more general basis but this plot also did not show any notable variation in pricing from weekday to weekend.
 
 **Figure 14: Price Distribution By Holiday:**
@@ -570,6 +574,7 @@ facet_wrap(~ cab_type) +
 labs(title = "Comparing Holiday Pricing to Cab Combo", x="Holiday", y="Mean Price") +
   coord_flip() 
 ```
+
 For price distribution by holiday, we presumed traffic would be higher on these days due to people travelling for the holiday and having time off. However, as seen in the violin plots and the bar plots above that was not the case. This may indicate that the pricing was changing slightly between cab-type segments on Lyft rides. However, Uber does remain very constant in its pricing regardless of holiday. The bar graph also shows the Lyft ride prices being more incremental than Uber ride pricing which remains very stable. 
 
 **Figure 15: Comparing Cost of Rides on Holidays:**
@@ -595,6 +600,7 @@ geom_line() +
 facet_wrap(~ cab_combo) +
 labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price")
 ```
+
 To further visualise the pricing of Uber and Lyft on holidays we plotted them on line graphs. This provides an additional visualization outside of the violin plots. It is clear from these plots that the prices remain stable with small peaks later in the days presumably around the evening rush hour period.
 
 **Figure 16: Comparing Rush Hour Price for Weekdays to Price on Normal Weekends:**
@@ -641,7 +647,8 @@ labs(title = "Uber - Comparing rush hour price for weekdays to price on normal w
 ", x="Rush Hour", y="Mean Price") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-In this EDA section we plotted the comparison of rush hour to weekdays and weekends on a bar plot categorized by cab-type. This plot demonstrates that the prices for rides remain steady across normal hours, morning rush and evening rush on both evenings and weekends. There are many bars on this plot and they are smaller but the numbers on the bars further confirm the limited change in pricing across the varying rush hours on weekdays and weekends.
+
+In this EDA section we plotted the comparison of rush hour to weekdays and weekends on a bar plot and a heatmap categorized by cab-type. These plots demonstrates that the prices for rides remain steady across normal hours, morning rush and evening rush on both evenings and weekends. The consistency in the bar graph values and teh heatmap values further confirm the limited change in pricing across the varying rush hours on weekdays and weekends.
 
 **Figure 17: Price Distribution by Rush Hour:**
 
@@ -656,6 +663,7 @@ ggplot(merged_data, aes(x = rush_hour, y = price, fill = rush_hour)) +
   theme_minimal() +
   theme(legend.position = "none") 
 ```
+
 The following violin plot demonstrates the price distribution of Uber and Lyft apps during our three categorized rush hour periods. As can be seen in the plot the price remains very similar across all three rush hour periods. The wider sections of the violin plots in this EDA indicate that there are more rides at that price point. Both Uber and Lyft have very specific shapes that do not change as rush hour changes.
 
 **Figure 18: Compare Cab Combo, Holiday and Uber & Lyft Surge Multiplier:**
@@ -681,6 +689,7 @@ facet_wrap(~ cab_type) +
 labs(title = "Compare Cab Combo, Holiday & Surge Multiplier", x="Cab Type", y="Surge Pricing") +
   coord_flip() 
 ```
+
 Surge multiplier was highlighted in our earlier research questions but we did also briefly plot it here to test its influence in our third research question. Uber remains constant because there was no observed surge price in this collected dataset. You can see the surge prices for Uber and Lyft here but a bar plot was not the most ideal for comparing surge across cab combo and holiday which is why we pivoted to a heatmap as can be seen in the following plot.
 
 **Figure 19: Lyft and Uber Compare Cab Combo, Holiday and Surge Multiplier:**
@@ -704,6 +713,7 @@ labs(title = "Uber - Compare Cab Combo, Holiday and Surge Multiplier
 ", x="Holiday", y="Cab Combo") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
 Here you can see a more clear breakdown of our surge visualization. A heatmap for this data is more appropriate because it shows the distribution through the colours and numbers on the plot in a much cleaner presentation. As we can see from the values of the surge multiplier for Lyft surge doesn’t change significantly over holidays compared to non-holidays.
 
 **Figure 20: Compare Pricing on Weekday Holidays to Rush Hour Pricing:**
@@ -737,6 +747,7 @@ labs(title = "Compare pricing on weekday holidays to rush hour pricing
 ", x="Rush Hour", y="Holiday") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
 For our comparison of weekday holidays to rush hour we initially plotted a bar graph and then pivoted to a heatmap to better visualize the values. The prices over all Uber and Lyft rides during all three rush hour periods on holidays were very stable. There was a slight dip on the price of Lyft rides in the evenings of Hannukah, and a slight increase in price of Uber rides in the normal hours of Cyber Monday.
 
 After completing our exploratory analyses we proceeded to create the models for each of our research questions. The information provided from our analysis helped us choose methods in an informed manner.
@@ -1024,24 +1035,31 @@ These results did not support our hypothesis. Surge pricing is not primarily dri
 **Research Question 3:**
 
 **Data Summary Results GAM:**
+
 The data summary of the GAM indicates that cab combo is the most significant covariate alongside surge multiplier. The EDF for the GAM is 2.5 which does indicate a degree of non-linearity, the baseline for linear being one. Our r-squared values also indicate that the GAM accounts for 81.6% of the deviance apparent in the model.
 
 **Figure 25: Residuals Plots:**
+
 The residual plots for our GAM give helpful insights into the model behaviour. The QQ Plot indicates that the model struggles at higher price values, this can be seen through the plot fitting the line well at the lower and middle values but curving upwards as the values increase. The residuals vs. Linear Predictor Plot and the Observed vs. Fitted Values Plot both have extreme banding. This we predict is due to how influential cab combo is on the price of Uber and Lyft ride prices. The bands on the Linear Predictor Plot do hover around zero however they peak in certain areas which indicates that the model is underestimating on certain high price rides. The observed vs. Fitted Values plot indicates there is variance being missed by the model. As described above the model accounts for 81.6% of the variance but there is still some that is not accounted for in this analysis. These gaps could be from covariates which were not included in the model for this research question. The Histogram of the Residuals is slightly right skewed as well which indicates that the mean is higher than the median, leading us to the conclusion we also drew from the QQ Plot which is that the model struggles predicting at higher price points.
 
 **Data Summary Results GLM:**
+
 Our GLM summary indicated that cab combo and surge multiplier are the most significant covariates for this model. The McFadden r-squared value we calculated is a 0.2469 which according to Stack Exchange applications of this function indicate a strong model fit (Reichenbach, 2014). 
 
 **Figure 26: Residuals Plots:** 
+
 The residual plots for our GLM are very similar to the residual plots of our GAM. Since there was not a significant difference in the model construction and there was only one continuous variable that was smoothed the plots are nearly identical. Which means the model for GLM also struggles as prices of rides increase as can be seen in the upwards curve of the QQ Plot. There are large variances in the Residuals vs. Linear Predictor Plot which indicate the model is underestimating the values of prices. The Observed vs. Fitted Values Plot indicates that there is quite a variance between the observed and predicted values. Since the GLM model also doesn’t account for all of the deviance it is likely that there are influences from other covariates in our dataset that are not taken into account for this question in particular. Finally, our histogram for the GLM is also positive right-skewed which indicates that the model is underfitting on the higher prices which is another confirmation for our observations above.
 
 **K-Fold Cross Validation:**
+
 To confirm this model we used k-fold cross validation with 10 folds. This was to further confirm the validity of the model by testing it against itself through withholding data. Withholding data for cross validation testing helps us maximize our dataset by training the model on some of our data and withholding the rest for validating the model performance on unseen data. The outcome of our k-fold cross validation was an RMSE of 3.98, r-squared of 81.75%, and an MAE of 2.95. The RMSE indicates that our model observed and fitted values were off on average by 3.98 dollars. Our r-squared score was 81.75%, which indicates how well the model performed on the validation set. And our MAE of 2.95 is the average difference between our price values (Farshad, 2024).
 
 **Choosing GLM:**
+
 We used both models to analyse the data prior to deciding on a singular model, but ultimately we chose the GLM. Prior to editing our analysis we had compared the GLM and GAM using AIC, which was not an accurate comparison since different models are not directly comparable. After reviewing the code and our analysis we looked at our existing code summaries and model covariates practically. There was only one continuous covariate in our model (hour), and although the EDF in the GAM was 2.5 indicating non-linearity hour is not significant enough to warrant keeping the GAM.  As discussed in the course it makes sense to choose the more simple model in situations like these when results and performance are similar. 
 
 ## Conclusion:
+
 Our analysis of the Uber and Lyft pricing dataset by Munde led us to draw new conclusions and confirmed parts of our initial hypotheses. 
 
 **Research Question 1:**
@@ -1053,6 +1071,7 @@ For our first research question we found that weather conditions have almost no 
 Our findings for our second research question indicated that surge pricing is predominantly driven by pickup location, with time of day playing a secondary role. Weather conditions showed no meaningful association with surge occurrence. We initially hypothesized that surge would be primarily influenced by weather and rush hour patterns rather than by location alone, but the data clearly indicated otherwise. The GLMM robustness check confirmed these findings. Although the source random effect captured non-trivial between location variance, all weather and time coefficients remained virtually identical across the GLM and GLMM. This stability demonstrates that our conclusions are robust to the choice of how location is modelled. With only 12 locations and over 21,000 observations per group, fixed effects provide reliable estimates without requiring random effects. 
 
 **Research Question 3:**
+
 Our third and final analysis led us to the conclusion that cab combo and surge multiplier are the primary influences on ride pricing for both Uber and Lyft. Surge multiplier was analysed more deeply in our second research question but in question three we did determine its strong significance. This does align with part of our initial hypothesis where we hypothesized cab combo would be the primary influence on price. However, in our hypothesis we had also predicted that rush hour, holiday and day of the week would be significant influences on price but that was not what our findings returned. The GLM was successful in representing the analysis of our dataset as can be confirmed by our EDA and our model validation through k-fold cross validation which yielded an r-squared value of 81.75%.
 
 ## Limitations:
@@ -1074,6 +1093,7 @@ Looking ahead, as more data is made public on Uber and Lyft ride hailing service
 We would also like to acknowledge that due to time constraints and the scope of the project requirements our analysis may not cover all insights obtainable from this dataset. 
 
 ## References
+
 Anthropic. (2026). Claude (claude-sonnet-4-6) [Large language model]. https://claude.ai
 
 Atlassian. (n.d.). A complete guide to violin plots. Atlassian. 
