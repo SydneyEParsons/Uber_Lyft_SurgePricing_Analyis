@@ -1,6 +1,6 @@
 ---
 title: "Project Report"
-output: rmarkdown::html_vignette
+output: rmarkdown::html_vignette 
 vignette: >
   %\VignetteIndexEntry{Project Report}
   %\VignetteEncoding{UTF-8}
@@ -805,7 +805,8 @@ geom_line() +
 facet_wrap(~ cab_combo) +
 labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price") 
 
-ggplot(data=normal_time_holiday_time_summary %>% filter(cab_type == "Uber"), mapping =aes(x=hour, y=mean_price, color=holiday)) +
+ggplot(data=normal_time_holiday_time_summary %>% filter(cab_type == "Uber"), 
+       mapping =aes(x=hour, y=mean_price, color=holiday)) +
 geom_line() +
 facet_wrap(~ cab_combo) +
 labs(title = "Compare Cost of Rides on Holidays", x="hour", y="mean_price")
@@ -892,8 +893,7 @@ hour periods. The wider sections of the violin plots in this EDA
 indicate that there are more rides at that price point. Both Uber and
 Lyft have very specific shapes that do not change as rush hour changes.
 
-**Figure 18: Compare Cab Combo, Holiday and Uber & Lyft Surge
-Multiplier:**
+**Figure 18: Compare Cab Combo, Holiday and Uber & Lyft Surge Multiplier:**
 
 ```{r fig.width=8, fig.height=8}
 #Compare cab_combo, holiday and surge multiplier
@@ -925,8 +925,7 @@ Uber and Lyft here but a bar plot was not the most ideal for comparing
 surge across cab combo and holiday which is why we pivoted to a heatmap
 as can be seen in the following plot.
 
-**Figure 19: Lyft and Uber Compare Cab Combo, Holiday and Surge
-Multiplier:**
+**Figure 19: Lyft and Uber Compare Cab Combo, Holiday and Surge Multiplier:**
 
 ```{r fig.width=8, fig.height=8}
 ggplot(data=holiday_surge_summary %>% filter(cab_type == "Lyft"), 
@@ -1358,8 +1357,7 @@ allows the model to effectively remove smooths that do not contribute
 meaningfully, providing automatic variable selection on the weather
 terms rather than relying on manual inspection of p values.
 
-**Figure 21: Estimated Smooth Effects of Weather Variables on
-Log(Price):**
+**Figure 21: Estimated Smooth Effects of Weather Variables on Log(Price):**
 
 Figure 21 displays the estimated smooth effects for each of the six
 weather variables on the log price scale, with dashed lines representing
@@ -1435,7 +1433,7 @@ rather than a service level decision.
 
 **Figure 23: Odds Ratios for Surge Occurrence (GLM):**
 
-Figure \# displays the odds ratios with 95 percent confidence intervals
+Figure 23 displays the odds ratios with 95 percent confidence intervals
 for the weather and time fixed effects from the GLM. Values greater than
 1.0 indicate higher surge probability while the dashed line at 1.0
 represents no effect. The odds ratios for weather variables all
@@ -1450,7 +1448,7 @@ of rain with any precision.
 
 **Figure 24: Binned Residual Plot (GLM):**
 
-Figure \# shows the binned residual plot for the logistic GLM, which is
+Figure 24 shows the binned residual plot for the logistic GLM, which is
 the standard diagnostic for binary response models. The plot divides the
 fitted probabilities into 40 bins and displays the average residual
 within each bin, with grey bands indicating approximate 95 percent
